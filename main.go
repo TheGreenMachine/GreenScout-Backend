@@ -132,8 +132,8 @@ func main() {
 			keyPath := ""
 			if !publicHosting {
 				// Local keys
-				crtPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "server.crt")
-				keyPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "server.key")
+				crtPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "localhost.crt")
+				keyPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "localhost.key")
 			}
 
 			jSrv.Addr = httpsPort
