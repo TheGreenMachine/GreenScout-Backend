@@ -29,7 +29,7 @@ with tbaapiv3client.ApiClient(configuration) as api_client:
     if not os.path.exists(team_lists_dir):
         os.mkdir(team_lists_dir)
     
-    filepath = os.path.join(team_lists_dir, f"${event_key}")
+    filepath = os.path.join(team_lists_dir, f"{event_key}")
  
     file = open(filepath, 'w')
 
