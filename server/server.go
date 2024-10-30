@@ -178,7 +178,7 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/sheetChange", handleWithCORS(handleSheetChange, false))
 
 	jsrv := &http.Server{ //TODO: love of god add an https thing -Leon
-		Addr: ":8443",
+		// Addr: ":8443",
 		// ReadTimeout:  20 * time.Second,
 		// WriteTimeout: 20 * time.Second,
 	}

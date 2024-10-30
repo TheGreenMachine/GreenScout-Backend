@@ -32,9 +32,15 @@ func main() {
 	publicHosting := false //Allows setup to bypass ip and domain validation to run localhost
 	serveTLS := false      //switches it between https and http [true for https]
 	updateDB := false
+	httpPort := ":8080"
+	httpsPort := ":8443"
 
-	if isSetup && filemanager.IsSudo() {
-		greenlogger.FatalLogMessage("If you are running in setup mode, please run without sudo!")
+	if filemanager.IsSudo() {
+		if isSetup {
+			greenlogger.FatalLogMessage("If you are running in setup mode, please run without sudo!")
+		}
+		httpPort = ":80"
+		httpsPort = ":443"
 	}
 
 	/// Running mode
@@ -105,7 +111,7 @@ func main() {
 		go func() {
 			// HTTP redirect to HTTPS server
 			h := serverManager.HTTPHandler(nil)
-			greenlogger.FatalError(http.ListenAndServe(":http", h), "http.ListenAndServe() failed")
+			greenlogger.FatalError(http.ListenAndServe(httpPort, h), "http.ListenAndServe() failed")
 		}()
 
 	}
@@ -130,14 +136,14 @@ func main() {
 				keyPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "server.key")
 			}
 
-			jSrv.Addr = ":8443" //https
+			jSrv.Addr = httpsPort
 			err := jSrv.ListenAndServeTLS(crtPath, keyPath)
 			if err != nil {
 				greenlogger.FatalError(err, "jSrv.ListendAndServeTLS() failed")
 			}
 
 		} else {
-			jSrv.Addr = ":8080" //http
+			jSrv.Addr = httpPort
 			err := jSrv.ListenAndServe()
 			if err != nil {
 				greenlogger.FatalError(err, "jSrv.ListendAndServe() failed")
