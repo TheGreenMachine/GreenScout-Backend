@@ -22,7 +22,7 @@ var logFileAlive bool
 // Panics if it is unable to create the file.
 func InitLogFile() {
 	filemanager.MkDirWithPermissions(constants.DefaultLogDirectory)
-	logFilePath := filepath.Join(constants.DefaultLogDirectory, "GSLog_"+time.Now().String())
+	logFilePath := filepath.Join(constants.DefaultLogDirectory, "GSLog_"+time.Now().Format("01-02-2006_h15m04s05")) //time format MM-DD-YEAR
 	file, err := filemanager.OpenWithPermissions(logFilePath)
 	if err != nil {
 		panic("ERR: Could not create log file! " + err.Error())
