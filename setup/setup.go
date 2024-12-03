@@ -362,9 +362,12 @@ func recursiveTBAKeyValidation(configs *constants.GeneralConfigs, firstRun bool)
 
 // Validates for the TBA event key. If it is a custom event key, it will simply return that. If not, it will run getEvent.py and return its result.
 func validateEventKey(configs constants.GeneralConfigs, key string) string {
-	if string(key[0]) == "c" { // Check for custom event
-		constants.CustomEventKey = true
-		return configs.EventKeyName
+
+	if len(key) != 0 {
+		if string(key[0]) == "c" { // Check for custom event
+			constants.CustomEventKey = true
+			return configs.EventKeyName
+		}
 	}
 
 	runnable := exec.Command(configs.PythonDriver, "getEvent.py", configs.TBAKey, key)
@@ -699,7 +702,7 @@ func recursivelyEnsureSpreadsheetID(id string) string {
 	if id == "" {
 		greenlogger.LogMessagef("Please enter a google sheets spreadsheet ID (the part in the url in between d/ and /edit ) that the account your token is associated with can edit.")
 	} else {
-		greenlogger.LogMessagef("Google Sheets spreadsheet ID %v is invalid, or you don't have permission to access it. Please enter an id of a spreadsheet that will work.", id)
+		greenlogger.LogMessagef("Google Sheets spreadsheet ID %v is invalid, or you don't have permission to access it. Please enter an id of a spreadsheet that will work. It may be that your access token has expired [delete token.json in the runtime directory]", id)
 	}
 	var newId string
 	_, scanErr := fmt.Scanln(&newId)
