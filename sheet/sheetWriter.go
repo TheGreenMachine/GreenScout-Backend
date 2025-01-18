@@ -92,12 +92,10 @@ func SetupSheetsAPI(b []byte) {
 	ctx := context.Background()
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
+	client, err := google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
 	if err != nil {
 		greenlogger.FatalError(err, "Unable to parse client secret file to config: %v")
 	}
-	client := getClient(config)
-
 	Srv, err = sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		greenlogger.FatalError(err, "Unable to retrieve Sheets client: %v")
