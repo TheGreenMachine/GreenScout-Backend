@@ -1,19 +1,20 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: greenscout-backend
+  name: ${SERVICE}
 spec:
   template:
     spec:
       containerConcurrency: 80
-      timeoutSeconds: 300
+      timeoutSeconds: 60
+      serviceAccountName: ${SERVICE_ACCOUNT}
       containers:
       - name: backend-service
-        image: {{IMAGE}}
+        image: ${IMAGE}
         args:
         - test
         ports:
-        - name: http
+        - name: http1
           containerPort: 8080
         resources:
           limits:
@@ -35,12 +36,12 @@ spec:
         csi:
           driver: gcsfuse.run.googleapis.com
           volumeAttributes:
-            bucketName: greenscout-backend-run
+            bucketName: ${RUN_BUCKET_NAME}
       - name: conf
         csi:
           driver: gcsfuse.run.googleapis.com
           volumeAttributes:
-            bucketName: greenscout-backend-conf
+            bucketName: ${CONF_BUCKET_NAME}
   traffic:
   - percent: 100
     latestRevision: true
