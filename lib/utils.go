@@ -82,6 +82,13 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64) {
 	var numShuttles float64
 	var numDistances float64
 
+	//
+	//
+	//
+	//
+	//
+	//
+
 	numCycles := len(cycles)
 
 	for _, cycle := range cycles {
@@ -313,34 +320,37 @@ func WriteEventsToFile(configs constants.GeneralConfigs) {
 	}
 }
 
-// Calculates the string from a SpeakerPositions object
-func GetSpeakerPosAsString(positions SpeakerPositions) string {
-	if positions.Sides && positions.Middle {
-		return "BOTH"
-	}
-
-	if positions.Middle {
-		return "MIDDLE"
-	} else if positions.Sides {
-		return "SIDES"
-	} else {
-		return "NONE"
-	}
-}
-
 // Calculates the string from a PickupLocations object
 func GetPickupLocations(locations PickupLocations) string {
-	if locations.Ground && locations.Source {
-		return "BOTH"
+	var welp string = ""
+
+	if locations.AlgaeGround &&
+		locations.AlgaeSource &&
+		locations.CoralGround &&
+		locations.CoralSource {
+		return "ALL TRUE"
 	}
 
-	if locations.Ground {
-		return "GROUND"
-	} else if locations.Source {
-		return "SOURCE"
-	} else {
-		return "NONE"
+	if locations.AlgaeGround && locations.AlgaeSource {
+		welp += "BOTH ALGAE;"
 	}
+	if locations.CoralGround && locations.CoralSource {
+		welp += "BOTH CORAL;"
+	}
+
+	if locations.AlgaeGround {
+		welp += "ALGAE GROUND;"
+	}
+
+	if locations.CoralSource {
+		welp += "CORAL SOURCE;"
+	}
+
+	if locations.CoralGround {
+		welp += "CORAL GROUND;"
+	}
+
+	return welp
 }
 
 // Calculates the string from data pertaining to a driverstation
@@ -387,6 +397,24 @@ func GetRow(team TeamData) int {
 	startRow += uint(dsOffset)
 
 	return int(startRow)
+}
+
+// Gets the parking status of the robot
+func GetParkStatus(data EndgameData) any {
+	if data.parkStatus == 1 {
+		return "Failed Attempted to Park"
+	} else if data.parkStatus == 2 {
+		return "Failed Attempted Shallow Climb"
+	} else if data.parkStatus == 3 {
+		return "Failed Attempted Deep Climb"
+	} else if data.parkStatus == 4 {
+		return "Parked in the Barge"
+	} else if data.parkStatus == 5 {
+		return "Climbed Shallow Cage"
+	} else if data.parkStatus == 6 {
+		return "Climbed Deep Cage"
+	}
+	return "Didn't Attempt to Park"
 }
 
 // Gets the row a pit scouting data should write to

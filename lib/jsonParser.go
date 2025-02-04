@@ -15,20 +15,20 @@ import (
 
 // Data from one scouter from one match
 type TeamData struct {
-	TeamNumber    uint64            `json:"Team"`              // The team number
-	Match         MatchInfo         `json:"Match"`             // The match number
-	Scouter       string            `json:"Scouter"`           // The scouter who recorded this data
-	DriverStation DriverStationData `json:"Driver Station"`    // The driver station
-	Cycles        []Cycle           `json:"Cycles"`            // The cycle data
-	Positions     SpeakerPositions  `json:"Speaker Positions"` // The recorded speaker positions
-	Pickups       PickupLocations   `json:"Pickup Locations"`  // The recorded speaker locations
-	Auto          AutoData          `json:"Auto"`              // The autonomous data
-	Climb         ClimbingData      `json:"Climbing"`          // The recorded climbing data
-	Trap          TrapData          `json:"Trap"`              // The recorded trap data
-	Misc          MiscData          `json:"Misc"`              // Miscellaneous data
-	Penalties     []string          `json:"Penalties"`         // Recorded penalties
-	Rescouting    bool              `json:"Rescouting"`        // If this match is rescouting (Will override all previous data of this match with this driverstation)
-	Notes         string            `json:"Notes"`             // Notes from the scouter
+	TeamNumber    uint64            `json:"Team"`             // The team number
+	Match         MatchInfo         `json:"Match"`            // The match number
+	Scouter       string            `json:"Scouter"`          // The scouter who recorded this data
+	DriverStation DriverStationData `json:"Driver Station"`   // The driver station
+	Cycles        []Cycle           `json:"Cycles"`           // The cycle data
+	Pickups       PickupLocations   `json:"Pickup Locations"` // The recorded speaker locations
+	Auto          AutoData          `json:"Auto"`             // The autonomous data
+	Climb         ClimbingData      `json:"Climbing"`         // The recorded climbing data
+	Trap          TrapData          `json:"Trap"`             // The recorded trap data
+	Endgame       EndgameData       `json:"Endgame"`          // The recorded endgame data
+	Misc          MiscData          `json:"Misc"`             // Miscellaneous data
+	Penalties     []string          `json:"Penalties"`        // Recorded penalties
+	Rescouting    bool              `json:"Rescouting"`       // If this match is rescouting (Will override all previous data of this match with this driverstation)
+	Notes         string            `json:"Notes"`            // Notes from the scouter
 }
 
 // Basic info about the match
@@ -70,21 +70,23 @@ type TrapData struct {
 	Score    int `json:"Score"`    // The number of notes it scored
 }
 
-// The positions a robot scored from
-type SpeakerPositions struct {
-	Sides  bool `json:"sides"`  // If it scored from the sides of the speaker
-	Middle bool `json:"Middle"` // If it scored from the middle of the speaker
+// Data about a robot's performance during parking, currently just for parking atm
+type EndgameData struct {
+	parkStatus int `json:"Parking Status"` // What the robot at the end of the game (i.e. did it park, did it climb, etc)
+
 }
 
 // Where a robot could pick up from
 type PickupLocations struct {
-	Ground bool `json:"ground"` // If it could pick up from the ground
-	Source bool `json:"source"` // If it could pick up from the source
+	CoralGround bool `json:"Coral Ground"` // If it could pick up from the ground
+	CoralSource bool `json:"Coral Source"` // If it could pick up from the source
+	AlgaeGround bool `json:"Algae Ground"` // If it could pick up from the ground
+	AlgaeSource bool `json:"Algae Source"` // If it could pick up from the source
+
 }
 
 // Miscellaneous robot data
 type MiscData struct {
-	Parked    bool `json:"Parked"`             // If the robot parked
 	DC        bool `json:"Lost Communication"` // If the robot DC'd
 	LostTrack bool `json:"User Lost Track"`    // If the scouter lost track
 	Disabled  bool `json:"Disabled"`           // If the robot was disabled
@@ -213,9 +215,8 @@ type PitScoutingData struct {
 	PitIdentifier string `json:"Pit"`     // The pit identifier, as seen on the pit map
 	Scouter       string `json:"Scouter"` // The person who did the pit scouting
 
-	Drivetrain string           `json:"Drivetrain"` // The type of drivetrain the robot has
-	Sides      SpeakerPositions `json:"Sides"`      // Which sides of the speaker it can shoot from
-	Distance   DistanceData     `json:"Distance"`   // The information on the distance shooting it can do
+	Drivetrain string       `json:"Drivetrain"` // The type of drivetrain the robot has
+	Distance   DistanceData `json:"Distance"`   // The information on the distance shooting it can do
 
 	AutoScores     int  `json:"Auto Scores"`  // The average scores this robot gets in auto
 	MiddleControls int  `json:"Middle Notes"` // The average number of notes from the middle this robot gets in auto

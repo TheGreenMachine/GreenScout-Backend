@@ -13,18 +13,17 @@ import (
 
 // Compliled data for an entire match from multiple scouters
 type MultiMatch struct {
-	TeamNumber       uint64             `json:"Team"`  // The team number
-	Match            MatchInfo          `json:"Match"` // The match number
-	Scouters         string             // The scouters who scouted this entry
-	DriverStation    DriverStationData  `json:"Driver Station"` // The driverstation of this entry
-	CycleData        CompositeCycleData // The compiled cycle data from multiple scouters
-	SpeakerPositions SpeakerPositions   // The compiled speaker positions from multiple scouters
-	Pickups          PickupLocations    // The compiled pickup locations from multiple scouters
-	Auto             AutoData           // The compiled auto data from multiple scouters
-	Climb            ClimbingData       // The compiled climbing data from multiple scouters
-	Parked           bool               // If any scouter recorded a park
-	TrapScore        int                // The compiled trap score from multiple scouters
-	Notes            []string           // The compiled notes from multiple scouters
+	TeamNumber    uint64             `json:"Team"`  // The team number
+	Match         MatchInfo          `json:"Match"` // The match number
+	Scouters      string             // The scouters who scouted this entry
+	DriverStation DriverStationData  `json:"Driver Station"` // The driverstation of this entry
+	CycleData     CompositeCycleData // The compiled cycle data from multiple scouters
+	Pickups       PickupLocations    // The compiled pickup locations from multiple scouters
+	Auto          AutoData           // The compiled auto data from multiple scouters
+	Climb         ClimbingData       // The compiled climbing data from multiple scouters
+	Parked        bool               // If any scouter recorded a park
+	TrapScore     int                // The compiled trap score from multiple scouters
+	Notes         []string           // The compiled notes from multiple scouters
 }
 
 // Compiled scouting data from multiple scouters
@@ -50,8 +49,6 @@ func CompileMultiMatch(entries ...TeamData) MultiMatch {
 	finalData.DriverStation = entries[0].DriverStation
 
 	finalData.CycleData = compileCycles(entries)
-
-	finalData.SpeakerPositions = compileSpeakerPositions(entries)
 
 	finalData.Pickups = compilePickupPositions(entries)
 
@@ -148,45 +145,36 @@ func avgCycleTimes(entries []TeamData) (float64, bool) {
 	return finalAvg, !CompareCycles(allCycles)
 }
 
-// Combines the speaker positions from all entries
-func compileSpeakerPositions(entries []TeamData) SpeakerPositions {
-	var sides bool = false
-	var middle bool = false
-
-	for _, entry := range entries {
-		if entry.Positions.Sides {
-			sides = true
-		}
-
-		if entry.Positions.Middle {
-			middle = true
-		}
-	}
-
-	return SpeakerPositions{
-		Sides:  sides,
-		Middle: middle,
-	}
-}
-
 // Combines the pickup locations from all entries
 func compilePickupPositions(entries []TeamData) PickupLocations {
+	var cGround bool = false
+	var cSource bool = false
 	var ground bool = false
 	var source bool = false
 
 	for _, entry := range entries {
-		if entry.Pickups.Ground {
+		if entry.Pickups.AlgaeGround {
 			ground = true
 		}
 
-		if entry.Pickups.Source {
+		if entry.Pickups.AlgaeSource {
 			source = true
+		}
+
+		if entry.Pickups.CoralGround {
+			cGround = true
+		}
+
+		if entry.Pickups.CoralSource {
+			cSource = true
 		}
 	}
 
 	return PickupLocations{
-		Ground: ground,
-		Source: source,
+		CoralGround: cGround,
+		CoralSource: cSource,
+		AlgaeGround: ground,
+		AlgaeSource: source,
 	}
 }
 
@@ -265,7 +253,7 @@ func compileClimbData(entries []TeamData) ClimbingData {
 // Returns if any scouter recorded a park
 func compileParked(entries []TeamData) bool {
 	for _, entry := range entries {
-		if entry.Misc.Parked {
+		if entry.EndgameData.parkStatus > 3 {
 			return true
 		}
 	}
