@@ -127,11 +127,9 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		matchdata.Auto.Scores,                     // Scores in auto
 		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
 		matchdata.Auto.Ejects,                     // Auto shuttles
-		matchdata.Climb.Succeeded,                 // Can climb
-		matchdata.Climb.Time,                      // Climb Time
-		matchdata.Parked,                          // Parked
-		matchdata.TrapScore,                       // Trap Score
-		lib.CompileNotes2(matchdata, sources),     // Notes + Penalties + DC + Lost track
+		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon
+		matchdata.Parked,                      // Parked
+		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -150,6 +148,7 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 }
 
 // Writes data from a single-scouted match to a line
+// TODO: CHANGE FOR REEFSCAPE
 func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 	ampTendency, speakerTendency, distanceTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
 	ampAccuracy, speakerAccuracy, distanceAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
@@ -172,10 +171,8 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 		teamData.Auto.Scores,                     // Scores in auto
 		lib.GetAutoAccuracy(teamData.Auto),       // Auto accuracy
 		teamData.Auto.Ejects,                     // Auto shuttles
-		teamData.Climb.Succeeded,                 // Can climb
-		teamData.Climb.Time,                      // Climb Time
-		teamData.Misc.Parked,                     // Parked
-		teamData.Trap.Score,                      // Trap Score
+		teamData.Endgame.Time,                    // Climb Time
+		lib.GetParkStatus(teamData.Endgame),      // Parked
 		lib.CompileNotes(teamData),               // Notes + Penalties + DC + Lost track
 	}
 
