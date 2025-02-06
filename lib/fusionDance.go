@@ -2,7 +2,6 @@ package lib
 
 import (
 	greenlogger "GreenScoutBackend/greenLogger"
-	"errors"
 	"fmt"
 	"math"
 
@@ -20,9 +19,7 @@ type MultiMatch struct {
 	CycleData     CompositeCycleData // The compiled cycle data from multiple scouters
 	Pickups       PickupLocations    // The compiled pickup locations from multiple scouters
 	Auto          AutoData           // The compiled auto data from multiple scouters
-	Climb         ClimbingData       // The compiled climbing data from multiple scouters
 	Parked        bool               // If any scouter recorded a park
-	TrapScore     int                // The compiled trap score from multiple scouters
 	Notes         []string           // The compiled notes from multiple scouters
 }
 
@@ -54,11 +51,9 @@ func CompileMultiMatch(entries ...TeamData) MultiMatch {
 
 	finalData.Auto = compileAutoData(entries)
 
-	finalData.Climb = compileClimbData(entries)
+	//TODO: DO MULTISCOUTING ENDGAME
 
 	finalData.Parked = compileParked(entries)
-
-	finalData.TrapScore = compileTrapScore(entries)
 
 	finalData.Notes = compileNotes(entries, nil)
 
@@ -220,59 +215,16 @@ func compileAutoData(entries []TeamData) AutoData {
 	}
 }
 
-// Compiles climbing data from all entries
-func compileClimbData(entries []TeamData) ClimbingData {
-	var success bool = false
-	var times []float64
-
-	for _, entry := range entries {
-		if entry.Climb.Succeeded {
-			success = true
-		}
-
-		if entry.Climb.Time > 0 {
-			times = append(times, entry.Climb.Time)
-		}
-	}
-	timeAvgd, err := stats.Mean(times)
-
-	if err != nil {
-		if errors.Is(err, stats.EmptyInput) {
-			timeAvgd = 0
-		} else {
-			greenlogger.LogErrorf(err, "Error finding mean of %v for climb times", times)
-		}
-	}
-
-	return ClimbingData{
-		Succeeded: success,
-		Time:      timeAvgd,
-	}
-}
+//TODO: ENDGAME compile MULTI
 
 // Returns if any scouter recorded a park
 func compileParked(entries []TeamData) bool {
 	for _, entry := range entries {
-		if entry.EndgameData.parkStatus > 3 {
+		if entry.Endgame.ParkStatus > 3 {
 			return true
 		}
 	}
 	return false
-}
-
-// Averages out the trap scores from all scouters
-func compileTrapScore(entries []TeamData) int {
-	var trapScores []float64
-	for _, entry := range entries {
-		trapScores = append(trapScores, float64(entry.Trap.Score))
-	}
-
-	trapAvgd, err := stats.Mean(trapScores)
-	if err != nil {
-		greenlogger.LogErrorf(err, "Error finding mean of %v for trap scores", trapScores)
-	}
-
-	return int(math.Round(trapAvgd))
 }
 
 // Combines the notes from all passed in scouters

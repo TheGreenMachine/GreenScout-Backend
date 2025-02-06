@@ -203,7 +203,7 @@ func CompileNotes(team TeamData) string {
 		finalNote += "LOST TRACK; "
 	}
 
-	if team.Misc.DC || team.Misc.Disabled {
+	if team.Misc.DC {
 		finalNote += "DISCONNECTED; "
 	}
 
@@ -227,7 +227,7 @@ func CompileNotes2(match MultiMatch, teams []TeamData) string {
 			lostTrack = true
 		}
 
-		if entry.Misc.DC || entry.Misc.Disabled {
+		if entry.Misc.DC {
 			DC = true
 		}
 	}
@@ -401,17 +401,18 @@ func GetRow(team TeamData) int {
 
 // Gets the parking status of the robot
 func GetParkStatus(data EndgameData) any {
-	if data.parkStatus == 1 {
+
+	if data.ParkStatus == 1 {
 		return "Failed Attempted to Park"
-	} else if data.parkStatus == 2 {
+	} else if data.ParkStatus == 2 {
 		return "Failed Attempted Shallow Climb"
-	} else if data.parkStatus == 3 {
+	} else if data.ParkStatus == 3 {
 		return "Failed Attempted Deep Climb"
-	} else if data.parkStatus == 4 {
+	} else if data.ParkStatus == 4 {
 		return "Parked in the Barge"
-	} else if data.parkStatus == 5 {
+	} else if data.ParkStatus == 5 {
 		return "Climbed Shallow Cage"
-	} else if data.parkStatus == 6 {
+	} else if data.ParkStatus == 6 {
 		return "Climbed Deep Cage"
 	}
 	return "Didn't Attempt to Park"

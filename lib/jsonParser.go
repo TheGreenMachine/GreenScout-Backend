@@ -21,9 +21,7 @@ type TeamData struct {
 	DriverStation DriverStationData `json:"Driver Station"`   // The driver station
 	Cycles        []Cycle           `json:"Cycles"`           // The cycle data
 	Pickups       PickupLocations   `json:"Pickup Locations"` // The recorded speaker locations
-	Auto          AutoData          `json:"Auto"`             // The autonomous data
-	Climb         ClimbingData      `json:"Climbing"`         // The recorded climbing data
-	Trap          TrapData          `json:"Trap"`             // The recorded trap data
+	Auto          AutoData          `json:"Auto"`             // The autonomous data           // The recorded trap data
 	Endgame       EndgameData       `json:"Endgame"`          // The recorded endgame data
 	Misc          MiscData          `json:"Misc"`             // Miscellaneous data
 	Penalties     []string          `json:"Penalties"`        // Recorded penalties
@@ -50,6 +48,14 @@ type Cycle struct {
 	Success bool    `json:"Success"` // If it was successful
 }
 
+// Where a robot could pick up from
+type PickupLocations struct {
+	CoralGround bool `json:"Coral Ground"` // If it could pick up from the ground
+	CoralSource bool `json:"Coral Source"` // If it could pick up from the source
+	AlgaeGround bool `json:"Algae Ground"` // If it could pick up from the ground
+	AlgaeSource bool `json:"Algae Source"` // If it could pick up from the source
+}
+
 // Data from the autonomous period
 type AutoData struct {
 	Can    bool `json:"Can"`    // If the robot has/can do autonomous
@@ -58,38 +64,16 @@ type AutoData struct {
 	Ejects int  `json:"Ejects"` // The ejects/shuttles in auto
 }
 
-// Data about the climb of a robot
-type ClimbingData struct {
-	Succeeded bool    `json:"Succeeded"` // If it successfully climbed
-	Time      float64 `json:"Time"`      // How long it took to climb
-}
-
-// Data about a robot's performance at the trap
-type TrapData struct {
-	Attempts int `json:"Attempts"` // The attempts it took
-	Score    int `json:"Score"`    // The number of notes it scored
-}
-
 // Data about a robot's performance during parking, currently just for parking atm
 type EndgameData struct {
-	parkStatus int `json:"Parking Status"` // What the robot at the end of the game (i.e. did it park, did it climb, etc)
-
-}
-
-// Where a robot could pick up from
-type PickupLocations struct {
-	CoralGround bool `json:"Coral Ground"` // If it could pick up from the ground
-	CoralSource bool `json:"Coral Source"` // If it could pick up from the source
-	AlgaeGround bool `json:"Algae Ground"` // If it could pick up from the ground
-	AlgaeSource bool `json:"Algae Source"` // If it could pick up from the source
-
+	ParkStatus int     `json:"Parking Status"` // What the robot at the end of the game (i.e. did it park, did it climb, etc)
+	Time       float64 `json:"Time"`           // How long it took to climb
 }
 
 // Miscellaneous robot data
 type MiscData struct {
-	DC        bool `json:"Lost Communication"` // If the robot DC'd
-	LostTrack bool `json:"User Lost Track"`    // If the scouter lost track
-	Disabled  bool `json:"Disabled"`           // If the robot was disabled
+	DC        bool `json:"Lost Communication or Disabled"` // If the robot DC'd
+	LostTrack bool `json:"User Lost Track"`                // If the scouter lost track
 }
 
 // Parses through the file at the passed in location, returning a compiled TeamData object and wether or not there were errors.
