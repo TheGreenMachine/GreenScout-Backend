@@ -369,19 +369,24 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		pitData.TeamNumber,        // Team Number
-		pitData.PitIdentifier,     // Pit Identifier
-		pitData.Drivetrain,        // Drivetrain type
-		pitData.Distance.Can,      // Can distance at all
-		lib.GetDistance(pitData),  // Distance from which shooting is possible
-		pitData.AutoScores,        // Auto Scores
-		pitData.MiddleControls,    // Middle notes controllable in auto
-		pitData.NoteDetection,     // Has note detection
-		pitData.Cycles,            // Avg cycles
-		pitData.DriverExperience,  // Driver years of experience
-		pitData.BotType,           // ex. Amp, Speaker, Defense
-		pitData.EndgameBehavior,   // Climb or park basically
-		lib.GetClimbTime(pitData), // Time to climb
+		pitData.TeamNumber,          //Team Number
+		pitData.Scouter,             //Person/people who pit scouted
+		pitData.Drivetrain,          //The type of drivetrain
+		pitData.GearRatio,           //The GearRatio on the top of my head
+		pitData.Coral,               //The position(s) their robot is able to score
+		pitData.Algae,               //The position(s) their robot is able to score
+		pitData.AlgaeGround,         //Whether it can collect algae from the ground
+		pitData.AlgaeSource,         //Whether it can collect algae from the source
+		pitData.Cycle,               //Their cycle time
+		pitData.Experience,          //The driver's experience
+		pitData.Teleop,              //The strategy for teleop??
+		pitData.Endgame,             //The strategy for endgame
+		pitData.Shallow,             //Whether it can shallow climb
+		pitData.Deep,                //Whether it can deep climb
+		pitData.RobotTypeCompliment, //What part of the robot compliments you?
+		pitData.FavoritePart,        //Favortite part of the robot
+		pitData.Notes,               //Other Notes
+
 	}
 
 	var vr sheets.ValueRange

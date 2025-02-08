@@ -195,26 +195,25 @@ func GetNameFromWritten(match MatchInfoRequest) string {
 
 // Data from pit scouting
 type PitScoutingData struct {
-	TeamNumber    int    `json:"Team"`    // The team number
-	PitIdentifier string `json:"Pit"`     // The pit identifier, as seen on the pit map
-	Scouter       string `json:"Scouter"` // The person who did the pit scouting
+	TeamNumber int `json:"Team"` // The team number
+	// PitIdentifier string `json:"Pit"`     // The pit identifier, as seen on the pit map
+	Scouter string `json:"Scouter"` // The person who did the pit scouting
 
-	Drivetrain string       `json:"Drivetrain"` // The type of drivetrain the robot has
-	Distance   DistanceData `json:"Distance"`   // The information on the distance shooting it can do
-
-	AutoScores     int  `json:"Auto Scores"`  // The average scores this robot gets in auto
-	MiddleControls int  `json:"Middle Notes"` // The average number of notes from the middle this robot gets in auto
-	NoteDetection  bool `json:"Detection"`    // If it has note detection
-
-	Cycles           int             `json:"Cycles"`       // The average number of cycles it gets in teleop
-	DriverExperience int             `json:"Experience"`   // The years of experience the driver has
-	BotType          string          `json:"Bot Type"`     // The type of robot it is (offense, defense, amp, speaker, etc)
-	HumanPlayer      HumanPlayerData `json:"Human Player"` // Data regarding this team's human player
-
-	EndgameBehavior string  `json:"Endgame Behavior"` // What does this robot do in endgame? (Park, climb, trap, etc)
-	ClimbTime       float64 `json:"Climb Time"`       // How long does it take for this robot to climb?
-
-	Notes string `json:"Notes"` // Other notes
+	Drivetrain          string    `json:"Drive Train"`                                   // The type of drivetrain the robot has
+	GearRatio           string    `json:"Gear Ratio"`                                    //  The type of gearratio the robot has
+	Coral               CoralData `json:"Coral Position"`                                //The position of the coral on the reef
+	Algae               AlgaeData `json:"Algae Position"`                                //The position of the algae on the reef
+	AlgaeGround         bool      `json:"Algae Ground Pickup"`                           //Whether the team is able to pick up from the ground
+	AlgaeSource         bool      `json:"Algae Source Pickup"`                           //Whether the team is able to pick up from the source
+	Cycle               int       `json:"Driver Years of Experience"`                    //How long the driver has been driving
+	Experience          string    `json:"Cycle Time"`                                    //The team's average cycle time
+	Teleop              int       `json:"Preferred Teleop"`                              //The preferred teleop???
+	Endgame             int       `json:"Preferred Endgame"`                             //The preferred endgame
+	Shallow             bool      `json:"Can Climb Shallow Cage"`                        //Whether it used the shallow climb
+	Deep                bool      `json:"Can Climb Deep Cage"`                           //Whether it used the deep climb
+	RobotTypeCompliment string    `json:"What Type of Robot Would Compliment You Best?"` //Question for pit scouting
+	FavoritePart        string    `json:"Favorite Part of the Robot?"`                   //Question for pit scouting
+	Notes               string    `json:"Notes"`                                         //Notes for other relevant information
 }
 
 // Pit scouting data regarding distance shooting
@@ -227,6 +226,16 @@ type DistanceData struct {
 type HumanPlayerData struct {
 	Position      int `json:"Position"`       // What position the human player prefers (source, amp, etc)
 	StageAccuracy int `json:"Stage Accuracy"` // How accurate the human player is at throwing the note onto the stage (sorry elena)
+}
+type CoralData struct {
+	L1 bool `json:"L1"` //L1 position of the reef
+	L2 bool `json:"L2"` //L2 position of the reef
+	L3 bool `json:"L3"` //L3 position of the reef
+	L4 bool `json:"L4"` //L4 position of the reef
+}
+type AlgaeData struct {
+	L2 bool `json:"A1"` //A1 position of the reef
+	L3 bool `json:"A2"` //A2 position of the reef
 }
 
 // Parses through the file at the passed in location, returning a compiled PitScoutingData object and wether or not there were errors.

@@ -584,21 +584,3 @@ func MoveFile(originalPath string, newPath string) bool {
 
 	return true
 }
-
-// Gets the distance a robot can shoot from, returning N/A if it has no ability to do so.
-func GetDistance(data PitScoutingData) any {
-	if data.Distance.Can {
-		return int(data.Distance.Distance)
-	}
-
-	return "N/A"
-}
-
-// Gets the time a robot takes to climb, returning N/A if it doesn't do so in endgame.
-func GetClimbTime(data PitScoutingData) any {
-	if data.EndgameBehavior == "Climb" {
-		return data.ClimbTime
-	}
-
-	return "N/A"
-}
