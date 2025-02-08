@@ -96,13 +96,13 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 
 	for _, cycle := range cycles {
 		switch cycle.Type {
-		case "Trough":
+		case "Trough/Coral Level 1":
 			numTrough++
-		case "L2":
+		case "Coral Level 2":
 			numL2++
-		case "L3":
+		case "Coral Level 3":
 			numL3++
-		case "L4":
+		case "Coral Level 4":
 			numL4++
 		case "Processor":
 			numProcessors++
