@@ -72,15 +72,18 @@ func GetCycleAccuracy(cycles []Cycle) any {
 
 // Calculates the tendencies of amp, speaker, shuttling, and distance shooting from an array of cycles.
 // Returns: Tendency to AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64) {
+func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, float64, float64, float64) {
 	if len(cycles) < 1 {
-		return 0, 0, 0, 0
+		return 0, 0, 0, 0, 0, 0, 0
 	}
 
-	var numAmps float64
-	var numSpeakers float64
+	var numTrough float64
+	var numL2 float64
+	var numL3 float64
+	var numL4 float64
+	var numProcessors float64
+	var numNets float64
 	var numShuttles float64
-	var numDistances float64
 
 	//
 	//
@@ -93,53 +96,86 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64) {
 
 	for _, cycle := range cycles {
 		switch cycle.Type {
-		case "Amp":
-			numAmps++
-		case "Speaker":
-			numSpeakers++
+		case "Trough":
+			numTrough++
+		case "L2":
+			numL2++
+		case "L3":
+			numL3++
+		case "L4":
+			numL4++
+		case "Processor":
+			numProcessors++
+		case "Net":
+			numNets++
 		case "Shuttle":
 			numShuttles++
-		case "Distance":
-			numDistances++
 		}
 	}
 
-	return numAmps / float64(numCycles),
-		numSpeakers / float64(numCycles),
-		numDistances / float64(numCycles),
+	return numTrough / float64(numCycles),
+		numL2 / float64(numCycles),
+		numL3 / float64(numCycles),
+		numL4 / float64(numCycles),
+		numProcessors / float64(numCycles),
+		numNets / float64(numCycles),
 		numShuttles / float64(numCycles)
 }
 
 // Calculates the accuracies of amp, speaker, shuttling, and distance shooting from an array of cycles, returning N/A for any that had 0 attempts.
 // Returns: Accuracy of AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleAccuracies(cycles []Cycle) (any, any, any, any) {
+func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 	if cyclesAreValid(cycles) {
-		ampsAttempted, ampsMade := 0, 0
-		speakersAttempted, speakersMade := 0, 0
-		distancesAttempted, distancesMade := 0, 0
+		troughAttempted, troughMade := 0, 0
+		L2Attempted, L2Made := 0, 0
+		L3Attempted, L3Made := 0, 0
+		L4Attempted, L4Made := 0, 0
+		processorsAttempted, processorsMade := 0, 0
+		netsAttempted, netsMade := 0, 0
 		shuttlesAttempted, shuttlesMade := 0, 0
 
 		for _, cycle := range cycles {
 			switch cycle.Type {
-			case "Amp":
+			case "Trough":
 				{
-					ampsAttempted++
+					troughAttempted++
 					if cycle.Success {
-						ampsMade++
+						troughMade++
 					}
 				}
-			case "Speaker":
+			case "L2":
 				{
-					speakersAttempted++
+					L2Attempted++
 					if cycle.Success {
-						speakersMade++
+						L2Made++
 					}
 				}
-			case "Distance":
+			case "L3":
 				{
-					distancesAttempted++
+					L3Attempted++
 					if cycle.Success {
-						distancesMade++
+						L3Made++
+					}
+				}
+			case "L4":
+				{
+					L4Attempted++
+					if cycle.Success {
+						L4Made++
+					}
+				}
+			case "Processor":
+				{
+					processorsAttempted++
+					if cycle.Success {
+						processorsMade++
+					}
+				}
+			case "Net":
+				{
+					netsAttempted++
+					if cycle.Success {
+						netsMade++
 					}
 				}
 			case "Shuttle":
@@ -152,27 +188,48 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any) {
 			}
 		}
 
-		var ampAccuracy any
-		var speakerAccuracy any
-		var distanceAccuracy any
+		var troughAccuracy any
+		var L2Accuracy any
+		var L3Accuracy any
+		var L4Accuracy any
+		var processorAccuracy any
+		var netsAccuracy any
 		var shuttleAccuracy any
 
-		if ampsAttempted == 0 {
-			ampAccuracy = "N/A"
+		if troughAttempted == 0 {
+			troughAccuracy = "N/A"
 		} else {
-			ampAccuracy = (float64(ampsMade) / float64(ampsAttempted)) * 100
+			troughAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		if speakersAttempted == 0 {
-			speakerAccuracy = "N/A"
+		if L2Attempted == 0 {
+			L2Accuracy = "N/A"
 		} else {
-			speakerAccuracy = (float64(speakersMade) / float64(speakersAttempted)) * 100
+			L2Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		if distancesAttempted == 0 {
-			distanceAccuracy = "N/A"
+		if L3Attempted == 0 {
+			L3Accuracy = "N/A"
 		} else {
-			distanceAccuracy = (float64(distancesMade) / float64(distancesAttempted)) * 100
+			L3Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+		}
+
+		if L4Attempted == 0 {
+			L4Accuracy = "N/A"
+		} else {
+			L4Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+		}
+
+		if processorsAttempted == 0 {
+			processorAccuracy = "N/A"
+		} else {
+			processorAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+		}
+
+		if netsAttempted == 0 {
+			netsAccuracy = "N/A"
+		} else {
+			netsAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
 		if shuttlesAttempted == 0 {
@@ -181,9 +238,9 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any) {
 			shuttleAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		return ampAccuracy, speakerAccuracy, distanceAccuracy, shuttleAccuracy
+		return troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netsAccuracy, shuttleAccuracy
 	}
-	return "N/A", "N/A", "N/A", "N/A"
+	return "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
 }
 
 // Gets the accuracy of a robot during an autonomous period, returning N/A if 0 attempts were made
