@@ -136,28 +136,28 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 
 		for _, cycle := range cycles {
 			switch cycle.Type {
-			case "Trough":
+			case "Trough/Coral Level 1":
 				{
 					troughAttempted++
 					if cycle.Success {
 						troughMade++
 					}
 				}
-			case "L2":
+			case "Coral Level 2":
 				{
 					L2Attempted++
 					if cycle.Success {
 						L2Made++
 					}
 				}
-			case "L3":
+			case "Coral Level 3":
 				{
 					L3Attempted++
 					if cycle.Success {
 						L3Made++
 					}
 				}
-			case "L4":
+			case "Coral Level 4":
 				{
 					L4Attempted++
 					if cycle.Success {
