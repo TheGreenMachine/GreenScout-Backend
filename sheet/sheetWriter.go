@@ -134,8 +134,7 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
 		matchdata.Auto.Ejects,                     // Auto shuttles
 		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon
-		matchdata.Parked,                      // Parked
-		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
+		matchdata.Parked, // Parked
 	}
 
 	var vr sheets.ValueRange
