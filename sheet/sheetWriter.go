@@ -181,8 +181,6 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 		lib.GetAutoAccuracy(teamData.Auto),        // Auto accuracy
 		teamData.Auto.Ejects,                      // Auto shuttles
 		teamData.Endgame.Time,                     // Climb Time
-		lib.GetParkStatus(teamData.Endgame),       // Parked
-		lib.CompileNotes(teamData),                // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange

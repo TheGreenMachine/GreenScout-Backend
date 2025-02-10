@@ -114,6 +114,38 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 		numNets / float64(numCycles),
 		numShuttles / float64(numCycles)
 }
+func GetAlgaePosAsString(positions AlgaeData) string {
+	if positions.L2 && positions.L3 {
+		return "BOTH"
+	}
+
+	if positions.L2 {
+		return "A1/L2"
+	} else if positions.L3 {
+		return "A2/L3"
+	} else {
+		return "NONE"
+	}
+}
+func GetCoralPosAsString(positions CoralData) string {
+	var result []string
+	if positions.L1 {
+		result = append(result, "L1")
+	}
+	if positions.L2 {
+		result = append(result, "L2")
+	}
+	if positions.L3 {
+		result = append(result, "L3")
+	}
+	if positions.L4 {
+		result = append(result, "L4")
+	}
+	if len(result) == 0 {
+		return "NONE"
+	}
+	return strings.Join(result, ", ")
+}
 
 // Calculates the accuracies of amp, speaker, shuttling, and distance shooting from an array of cycles, returning N/A for any that had 0 attempts.
 // Returns: Accuracy of AMP, SPEAKER, DISTANCE, SHUTTLE
@@ -244,54 +276,6 @@ func GetAutoAccuracy(auto AutoData) any {
 		return "N/A"
 	}
 	return (float64(auto.Scores) / float64(attempts)) * 100
-}
-
-// Compiles Losing track, DCs, penalties, and notes into one string of notes
-func CompileNotes(team TeamData) string {
-	var finalNote string = ""
-	if team.Misc.LostTrack {
-		finalNote += "LOST TRACK; "
-	}
-
-	if team.Misc.DC {
-		finalNote += "DISCONNECTED; "
-	}
-
-	if len(team.Penalties) > 0 {
-		finalNote += "PENALTIES= " + strings.Join(team.Penalties, ",") + "; "
-	}
-
-	finalNote += team.Notes
-	return finalNote
-}
-
-// Compiles Losing track, DCs, and notes into one string of notes.
-// Used for multi-scouting only
-func CompileNotes2(match MultiMatch, teams []TeamData) string {
-	var finalNote string = ""
-	var lostTrack bool = false
-	var DC bool = false
-
-	for _, entry := range teams {
-		if entry.Misc.LostTrack {
-			lostTrack = true
-		}
-
-		if entry.Misc.DC {
-			DC = true
-		}
-	}
-
-	if lostTrack {
-		finalNote += "LOST TRACK; "
-	}
-
-	if DC {
-		finalNote += "DISCONNECTED; "
-	}
-
-	finalNote += strings.Join(match.Notes, "; ")
-	return finalNote
 }
 
 // Returns if a file exists in Teamlists matching the passed in event key
@@ -454,25 +438,6 @@ func GetRow(team TeamData) int {
 	startRow += uint(dsOffset)
 
 	return int(startRow)
-}
-
-// Gets the parking status of the robot
-func GetParkStatus(data EndgameData) any {
-
-	if data.ParkStatus == 1 {
-		return "Failed Attempted to Park"
-	} else if data.ParkStatus == 2 {
-		return "Failed Attempted Shallow Climb"
-	} else if data.ParkStatus == 3 {
-		return "Failed Attempted Deep Climb"
-	} else if data.ParkStatus == 4 {
-		return "Parked in the Barge"
-	} else if data.ParkStatus == 5 {
-		return "Climbed Shallow Cage"
-	} else if data.ParkStatus == 6 {
-		return "Climbed Deep Cage"
-	}
-	return "Didn't Attempt to Park"
 }
 
 // Gets the row a pit scouting data should write to
