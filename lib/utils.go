@@ -407,6 +407,13 @@ func GetPickupLocations(locations PickupLocations) string {
 		welp += "CORAL GROUND;"
 	}
 
+	if !locations.AlgaeGround &&
+		!locations.AlgaeSource &&
+		!locations.CoralGround &&
+		!locations.CoralSource {
+		return "NO PICKUP"
+	}
+
 	return welp
 }
 
