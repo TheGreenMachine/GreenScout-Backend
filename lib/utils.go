@@ -85,13 +85,6 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 	var numNets float64
 	var numShuttles float64
 
-	//
-	//
-	//
-	//
-	//
-	//
-
 	numCycles := len(cycles)
 
 	for _, cycle := range cycles {
