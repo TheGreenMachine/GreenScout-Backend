@@ -128,7 +128,7 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		netAccuracy,                               // Bet accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
 		shuttleAccuracy,                           // Shuttle accuracy
-		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions
+		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns.
 		matchdata.Auto.Can,                        // Had Auto
 		matchdata.Auto.Scores,                     // Scores in auto
 		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
@@ -154,7 +154,6 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 }
 
 // Writes data from a single-scouted match to a line
-// TODO: CHANGE FOR REEFSCAPE
 func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
 	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
