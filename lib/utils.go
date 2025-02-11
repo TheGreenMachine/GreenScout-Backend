@@ -372,7 +372,7 @@ func WriteEventsToFile(configs constants.GeneralConfigs) {
 
 // Calculates the string from a PickupLocations object
 func GetPickupLocations(locations PickupLocations) string {
-	var welp string = ""
+	var rv string = ""
 
 	if locations.AlgaeGround &&
 		locations.AlgaeSource &&
@@ -382,22 +382,22 @@ func GetPickupLocations(locations PickupLocations) string {
 	}
 
 	if locations.AlgaeGround && locations.AlgaeSource {
-		welp += "BOTH ALGAE;"
+		rv += "BOTH ALGAE;"
 	}
 	if locations.CoralGround && locations.CoralSource {
-		welp += "BOTH CORAL;"
+		rv += "BOTH CORAL;"
 	}
 
 	if locations.AlgaeGround {
-		welp += "ALGAE GROUND;"
+		rv += "ALGAE GROUND;"
 	}
 
 	if locations.CoralSource {
-		welp += "CORAL SOURCE;"
+		rv += "CORAL SOURCE;"
 	}
 
 	if locations.CoralGround {
-		welp += "CORAL GROUND;"
+		rv += "CORAL GROUND;"
 	}
 
 	if !locations.AlgaeGround &&
@@ -407,7 +407,7 @@ func GetPickupLocations(locations PickupLocations) string {
 		return "NO PICKUP"
 	}
 
-	return welp
+	return rv
 }
 
 // Calculates the string from data pertaining to a driverstation
