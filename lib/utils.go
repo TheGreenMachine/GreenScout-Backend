@@ -72,67 +72,103 @@ func GetCycleAccuracy(cycles []Cycle) any {
 
 // Calculates the tendencies of amp, speaker, shuttling, and distance shooting from an array of cycles.
 // Returns: Tendency to AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64) {
+func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, float64, float64, float64) {
 	if len(cycles) < 1 {
-		return 0, 0, 0, 0
+		return 0, 0, 0, 0, 0, 0, 0
 	}
 
-	var numAmps float64
-	var numSpeakers float64
+	var numTrough float64
+	var numL2 float64
+	var numL3 float64
+	var numL4 float64
+	var numProcessors float64
+	var numNets float64
 	var numShuttles float64
-	var numDistances float64
 
 	numCycles := len(cycles)
 
 	for _, cycle := range cycles {
 		switch cycle.Type {
-		case "Amp":
-			numAmps++
-		case "Speaker":
-			numSpeakers++
+		case "Trough/Coral Level 1":
+			numTrough++
+		case "Coral Level 2":
+			numL2++
+		case "Coral Level 3":
+			numL3++
+		case "Coral Level 4":
+			numL4++
+		case "Processor":
+			numProcessors++
+		case "Net":
+			numNets++
 		case "Shuttle":
 			numShuttles++
-		case "Distance":
-			numDistances++
 		}
 	}
 
-	return numAmps / float64(numCycles),
-		numSpeakers / float64(numCycles),
-		numDistances / float64(numCycles),
+	return numTrough / float64(numCycles),
+		numL2 / float64(numCycles),
+		numL3 / float64(numCycles),
+		numL4 / float64(numCycles),
+		numProcessors / float64(numCycles),
+		numNets / float64(numCycles),
 		numShuttles / float64(numCycles)
 }
 
 // Calculates the accuracies of amp, speaker, shuttling, and distance shooting from an array of cycles, returning N/A for any that had 0 attempts.
 // Returns: Accuracy of AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleAccuracies(cycles []Cycle) (any, any, any, any) {
+func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 	if cyclesAreValid(cycles) {
-		ampsAttempted, ampsMade := 0, 0
-		speakersAttempted, speakersMade := 0, 0
-		distancesAttempted, distancesMade := 0, 0
+		troughAttempted, troughMade := 0, 0
+		L2Attempted, L2Made := 0, 0
+		L3Attempted, L3Made := 0, 0
+		L4Attempted, L4Made := 0, 0
+		processorsAttempted, processorsMade := 0, 0
+		netsAttempted, netsMade := 0, 0
 		shuttlesAttempted, shuttlesMade := 0, 0
 
 		for _, cycle := range cycles {
 			switch cycle.Type {
-			case "Amp":
+			case "Trough/Coral Level 1":
 				{
-					ampsAttempted++
+					troughAttempted++
 					if cycle.Success {
-						ampsMade++
+						troughMade++
 					}
 				}
-			case "Speaker":
+			case "Coral Level 2":
 				{
-					speakersAttempted++
+					L2Attempted++
 					if cycle.Success {
-						speakersMade++
+						L2Made++
 					}
 				}
-			case "Distance":
+			case "Coral Level 3":
 				{
-					distancesAttempted++
+					L3Attempted++
 					if cycle.Success {
-						distancesMade++
+						L3Made++
+					}
+				}
+			case "Coral Level 4":
+				{
+					L4Attempted++
+					if cycle.Success {
+						L4Made++
+					}
+				}
+			case "Processor":
+				{
+					processorsAttempted++
+					if cycle.Success {
+						processorsMade++
+					}
+				}
+			case "Net":
+				{
+					netsAttempted++
+					if cycle.Success {
+						netsMade++
 					}
 				}
 			case "Shuttle":
@@ -145,27 +181,48 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any) {
 			}
 		}
 
-		var ampAccuracy any
-		var speakerAccuracy any
-		var distanceAccuracy any
+		var troughAccuracy any
+		var L2Accuracy any
+		var L3Accuracy any
+		var L4Accuracy any
+		var processorAccuracy any
+		var netsAccuracy any
 		var shuttleAccuracy any
 
-		if ampsAttempted == 0 {
-			ampAccuracy = "N/A"
+		if troughAttempted == 0 {
+			troughAccuracy = "N/A"
 		} else {
-			ampAccuracy = (float64(ampsMade) / float64(ampsAttempted)) * 100
+			troughAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		if speakersAttempted == 0 {
-			speakerAccuracy = "N/A"
+		if L2Attempted == 0 {
+			L2Accuracy = "N/A"
 		} else {
-			speakerAccuracy = (float64(speakersMade) / float64(speakersAttempted)) * 100
+			L2Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		if distancesAttempted == 0 {
-			distanceAccuracy = "N/A"
+		if L3Attempted == 0 {
+			L3Accuracy = "N/A"
 		} else {
-			distanceAccuracy = (float64(distancesMade) / float64(distancesAttempted)) * 100
+			L3Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+		}
+
+		if L4Attempted == 0 {
+			L4Accuracy = "N/A"
+		} else {
+			L4Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+		}
+
+		if processorsAttempted == 0 {
+			processorAccuracy = "N/A"
+		} else {
+			processorAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+		}
+
+		if netsAttempted == 0 {
+			netsAccuracy = "N/A"
+		} else {
+			netsAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
 		if shuttlesAttempted == 0 {
@@ -174,9 +231,9 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any) {
 			shuttleAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		return ampAccuracy, speakerAccuracy, distanceAccuracy, shuttleAccuracy
+		return troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netsAccuracy, shuttleAccuracy
 	}
-	return "N/A", "N/A", "N/A", "N/A"
+	return "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
 }
 
 // Gets the accuracy of a robot during an autonomous period, returning N/A if 0 attempts were made
@@ -196,7 +253,7 @@ func CompileNotes(team TeamData) string {
 		finalNote += "LOST TRACK; "
 	}
 
-	if team.Misc.DC || team.Misc.Disabled {
+	if team.Misc.DC {
 		finalNote += "DISCONNECTED; "
 	}
 
@@ -220,7 +277,7 @@ func CompileNotes2(match MultiMatch, teams []TeamData) string {
 			lostTrack = true
 		}
 
-		if entry.Misc.DC || entry.Misc.Disabled {
+		if entry.Misc.DC {
 			DC = true
 		}
 	}
@@ -313,34 +370,44 @@ func WriteEventsToFile(configs constants.GeneralConfigs) {
 	}
 }
 
-// Calculates the string from a SpeakerPositions object
-func GetSpeakerPosAsString(positions SpeakerPositions) string {
-	if positions.Sides && positions.Middle {
-		return "BOTH"
-	}
-
-	if positions.Middle {
-		return "MIDDLE"
-	} else if positions.Sides {
-		return "SIDES"
-	} else {
-		return "NONE"
-	}
-}
-
 // Calculates the string from a PickupLocations object
 func GetPickupLocations(locations PickupLocations) string {
-	if locations.Ground && locations.Source {
-		return "BOTH"
+	var rv string = ""
+
+	if locations.AlgaeGround &&
+		locations.AlgaeSource &&
+		locations.CoralGround &&
+		locations.CoralSource {
+		return "ALL TRUE"
 	}
 
-	if locations.Ground {
-		return "GROUND"
-	} else if locations.Source {
-		return "SOURCE"
-	} else {
-		return "NONE"
+	if locations.AlgaeGround && locations.AlgaeSource {
+		rv += "BOTH ALGAE;"
 	}
+	if locations.CoralGround && locations.CoralSource {
+		rv += "BOTH CORAL;"
+	}
+
+	if locations.AlgaeGround {
+		rv += "ALGAE GROUND;"
+	}
+
+	if locations.CoralSource {
+		rv += "CORAL SOURCE;"
+	}
+
+	if locations.CoralGround {
+		rv += "CORAL GROUND;"
+	}
+
+	if !locations.AlgaeGround &&
+		!locations.AlgaeSource &&
+		!locations.CoralGround &&
+		!locations.CoralSource {
+		return "NO PICKUP"
+	}
+
+	return rv
 }
 
 // Calculates the string from data pertaining to a driverstation
@@ -387,6 +454,25 @@ func GetRow(team TeamData) int {
 	startRow += uint(dsOffset)
 
 	return int(startRow)
+}
+
+// Gets the parking status of the robot
+func GetParkStatus(data EndgameData) any {
+
+	if data.ParkStatus == 1 {
+		return "Failed Attempted to Park"
+	} else if data.ParkStatus == 2 {
+		return "Failed Attempted Shallow Climb"
+	} else if data.ParkStatus == 3 {
+		return "Failed Attempted Deep Climb"
+	} else if data.ParkStatus == 4 {
+		return "Parked in the Barge"
+	} else if data.ParkStatus == 5 {
+		return "Climbed Shallow Cage"
+	} else if data.ParkStatus == 6 {
+		return "Climbed Deep Cage"
+	}
+	return "Didn't Attempt to Park"
 }
 
 // Gets the row a pit scouting data should write to

@@ -701,7 +701,7 @@ func recursivelyEnsureSpreadsheetID(id string) string {
 	if id == "" {
 		greenlogger.LogMessagef("Please enter a google sheets spreadsheet ID (the part in the url in between d/ and /edit ) that the account your token is associated with can edit.")
 	} else {
-		greenlogger.LogMessagef("Google Sheets spreadsheet ID %v is invalid, or you don't have permission to access it. Please enter an id of a spreadsheet that will work.", id)
+		greenlogger.LogMessagef("Google Sheets spreadsheet ID %v is invalid, or you don't have permission to access it. Please enter an id of a spreadsheet that will work. It may be that your access token has expired [delete token.json in the runtime directory]", id)
 	}
 	var newId string
 	_, scanErr := fmt.Scanln(&newId)

@@ -106,33 +106,36 @@ func SetupSheetsAPI(b []byte) {
 
 // Writes team data from multi-scouting to a specified line
 func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources []lib.TeamData) bool {
-	ampTendency, speakerTendency, distanceTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
-	ampAccuracy, speakerAccuracy, distanceAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,
-		math.Round(ampTendency*10000) / 100,                   // Amp tendency
-		ampAccuracy,                                           // Amp Accuracy
-		math.Round(speakerTendency*10000) / 100,               // Speaker tendency
-		speakerAccuracy,                                       // Speaker Accuracy
-		math.Round(distanceTendency*10000) / 100,              // Distance tendency
-		distanceAccuracy,                                      // Distance accuracy
-		math.Round(shuttleTendency*10000) / 100,               // Shuttle tendency
-		shuttleAccuracy,                                       // Shuttle accuracy
-		lib.GetSpeakerPosAsString(matchdata.SpeakerPositions), // Speaker positions
-		lib.GetPickupLocations(matchdata.Pickups),             // Pickup positions
-		matchdata.Auto.Can,                                    // Had Auto
-		matchdata.Auto.Scores,                                 // Scores in auto
-		lib.GetAutoAccuracy(matchdata.Auto),                   // Auto accuracy
-		matchdata.Auto.Ejects,                                 // Auto shuttles
-		matchdata.Climb.Succeeded,                             // Can climb
-		matchdata.Climb.Time,                                  // Climb Time
-		matchdata.Parked,                                      // Parked
-		matchdata.TrapScore,                                   // Trap Score
-		lib.CompileNotes2(matchdata, sources),                 // Notes + Penalties + DC + Lost track
+		math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
+		troughAccuracy,                            // L1/Trough accuracy
+		math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
+		L2Accuracy,                                // L2 Coral accuracy
+		math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
+		L3Accuracy,                                // L3 Coral accuracy
+		math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
+		L4Accuracy,                                // L4 Coral accuracy
+		math.Round(processorTendency*10000) / 100, // Processor tendency
+		processorAccuracy,                         // Processor accuracy
+		math.Round(netTendency*10000) / 100,       // Net tendency
+		netAccuracy,                               // Bet accuracy
+		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
+		shuttleAccuracy,                           // Shuttle accuracy
+		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns.
+		matchdata.Auto.Can,                        // Had Auto
+		matchdata.Auto.Scores,                     // Scores in auto
+		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
+		matchdata.Auto.Ejects,                     // Auto shuttles
+		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon
+		matchdata.Parked,                      // Parked
+		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -152,33 +155,35 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 
 // Writes data from a single-scouted match to a line
 func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
-	ampTendency, speakerTendency, distanceTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
-	ampAccuracy, speakerAccuracy, distanceAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
-
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		teamData.TeamNumber,                           // Team Number
-		lib.GetAvgCycleTime(teamData.Cycles),          // Avg cycle time
-		lib.GetNumCycles(teamData.Cycles),             // Num Cycles
-		math.Round(ampTendency*10000) / 100,           // Amp tendency
-		ampAccuracy,                                   // Amp Accuracy
-		math.Round(speakerTendency*10000) / 100,       // Speaker tendency
-		speakerAccuracy,                               // Speaker Accuracy
-		math.Round(distanceTendency*10000) / 100,      // Distance tendency
-		distanceAccuracy,                              // Distance accuracy
-		math.Round(shuttleTendency*10000) / 100,       // Shuttle tendency
-		shuttleAccuracy,                               // Shuttle accuracy
-		lib.GetSpeakerPosAsString(teamData.Positions), // Speaker positions
-		lib.GetPickupLocations(teamData.Pickups),      // Pickup positions
-		teamData.Auto.Can,                             // Had Auto
-		teamData.Auto.Scores,                          // Scores in auto
-		lib.GetAutoAccuracy(teamData.Auto),            // Auto accuracy
-		teamData.Auto.Ejects,                          // Auto shuttles
-		teamData.Climb.Succeeded,                      // Can climb
-		teamData.Climb.Time,                           // Climb Time
-		teamData.Misc.Parked,                          // Parked
-		teamData.Trap.Score,                           // Trap Score
-		lib.CompileNotes(teamData),                    // Notes + Penalties + DC + Lost track
+		teamData.TeamNumber,                       // Team Number
+		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
+		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
+		math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
+		troughAccuracy,                            // L1/Trough accuracy
+		math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
+		L2Accuracy,                                // L2 Coral accuracy
+		math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
+		L3Accuracy,                                // L3 Coral accuracy
+		math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
+		L4Accuracy,                                // L4 Coral accuracy
+		math.Round(processorTendency*10000) / 100, // Processor tendency
+		processorAccuracy,                         // Processor accuracy
+		math.Round(netTendency*10000) / 100,       // Net tendency
+		netAccuracy,                               // Net accuracy
+		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
+		shuttleAccuracy,                           // Shuttle accuracy
+		lib.GetPickupLocations(teamData.Pickups),  // Pickup positions
+		teamData.Auto.Can,                         // Had Auto
+		teamData.Auto.Scores,                      // Scores in auto
+		lib.GetAutoAccuracy(teamData.Auto),        // Auto accuracy
+		teamData.Auto.Ejects,                      // Auto shuttles
+		teamData.Endgame.Time,                     // Climb Time
+		lib.GetParkStatus(teamData.Endgame),       // Parked
+		lib.CompileNotes(teamData),                // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -364,20 +369,19 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		pitData.TeamNumber,                       // Team Number
-		pitData.PitIdentifier,                    // Pit Identifier
-		pitData.Drivetrain,                       // Drivetrain type
-		lib.GetSpeakerPosAsString(pitData.Sides), // Speaker positions
-		pitData.Distance.Can,                     // Can distance at all
-		lib.GetDistance(pitData),                 // Distance from which shooting is possible
-		pitData.AutoScores,                       // Auto Scores
-		pitData.MiddleControls,                   // Middle notes controllable in auto
-		pitData.NoteDetection,                    // Has note detection
-		pitData.Cycles,                           // Avg cycles
-		pitData.DriverExperience,                 // Driver years of experience
-		pitData.BotType,                          // ex. Amp, Speaker, Defense
-		pitData.EndgameBehavior,                  // Climb or park basically
-		lib.GetClimbTime(pitData),                // Time to climb
+		pitData.TeamNumber,        // Team Number
+		pitData.PitIdentifier,     // Pit Identifier
+		pitData.Drivetrain,        // Drivetrain type
+		pitData.Distance.Can,      // Can distance at all
+		lib.GetDistance(pitData),  // Distance from which shooting is possible
+		pitData.AutoScores,        // Auto Scores
+		pitData.MiddleControls,    // Middle notes controllable in auto
+		pitData.NoteDetection,     // Has note detection
+		pitData.Cycles,            // Avg cycles
+		pitData.DriverExperience,  // Driver years of experience
+		pitData.BotType,           // ex. Amp, Speaker, Defense
+		pitData.EndgameBehavior,   // Climb or park basically
+		lib.GetClimbTime(pitData), // Time to climb
 	}
 
 	var vr sheets.ValueRange

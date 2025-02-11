@@ -2,7 +2,6 @@ package lib
 
 import (
 	greenlogger "GreenScoutBackend/greenLogger"
-	"errors"
 	"fmt"
 	"math"
 
@@ -13,18 +12,15 @@ import (
 
 // Compliled data for an entire match from multiple scouters
 type MultiMatch struct {
-	TeamNumber       uint64             `json:"Team"`  // The team number
-	Match            MatchInfo          `json:"Match"` // The match number
-	Scouters         string             // The scouters who scouted this entry
-	DriverStation    DriverStationData  `json:"Driver Station"` // The driverstation of this entry
-	CycleData        CompositeCycleData // The compiled cycle data from multiple scouters
-	SpeakerPositions SpeakerPositions   // The compiled speaker positions from multiple scouters
-	Pickups          PickupLocations    // The compiled pickup locations from multiple scouters
-	Auto             AutoData           // The compiled auto data from multiple scouters
-	Climb            ClimbingData       // The compiled climbing data from multiple scouters
-	Parked           bool               // If any scouter recorded a park
-	TrapScore        int                // The compiled trap score from multiple scouters
-	Notes            []string           // The compiled notes from multiple scouters
+	TeamNumber    uint64             `json:"Team"`  // The team number
+	Match         MatchInfo          `json:"Match"` // The match number
+	Scouters      string             // The scouters who scouted this entry
+	DriverStation DriverStationData  `json:"Driver Station"` // The driverstation of this entry
+	CycleData     CompositeCycleData // The compiled cycle data from multiple scouters
+	Pickups       PickupLocations    // The compiled pickup locations from multiple scouters
+	Auto          AutoData           // The compiled auto data from multiple scouters
+	Parked        bool               // If any scouter recorded a park
+	Notes         []string           // The compiled notes from multiple scouters
 }
 
 // Compiled scouting data from multiple scouters
@@ -51,17 +47,13 @@ func CompileMultiMatch(entries ...TeamData) MultiMatch {
 
 	finalData.CycleData = compileCycles(entries)
 
-	finalData.SpeakerPositions = compileSpeakerPositions(entries)
-
 	finalData.Pickups = compilePickupPositions(entries)
 
 	finalData.Auto = compileAutoData(entries)
 
-	finalData.Climb = compileClimbData(entries)
+	//TODO: DO MULTISCOUTING ENDGAME
 
 	finalData.Parked = compileParked(entries)
-
-	finalData.TrapScore = compileTrapScore(entries)
 
 	finalData.Notes = compileNotes(entries, nil)
 
@@ -148,45 +140,36 @@ func avgCycleTimes(entries []TeamData) (float64, bool) {
 	return finalAvg, !CompareCycles(allCycles)
 }
 
-// Combines the speaker positions from all entries
-func compileSpeakerPositions(entries []TeamData) SpeakerPositions {
-	var sides bool = false
-	var middle bool = false
-
-	for _, entry := range entries {
-		if entry.Positions.Sides {
-			sides = true
-		}
-
-		if entry.Positions.Middle {
-			middle = true
-		}
-	}
-
-	return SpeakerPositions{
-		Sides:  sides,
-		Middle: middle,
-	}
-}
-
 // Combines the pickup locations from all entries
 func compilePickupPositions(entries []TeamData) PickupLocations {
+	var cGround bool = false
+	var cSource bool = false
 	var ground bool = false
 	var source bool = false
 
 	for _, entry := range entries {
-		if entry.Pickups.Ground {
+		if entry.Pickups.AlgaeGround {
 			ground = true
 		}
 
-		if entry.Pickups.Source {
+		if entry.Pickups.AlgaeSource {
 			source = true
+		}
+
+		if entry.Pickups.CoralGround {
+			cGround = true
+		}
+
+		if entry.Pickups.CoralSource {
+			cSource = true
 		}
 	}
 
 	return PickupLocations{
-		Ground: ground,
-		Source: source,
+		CoralGround: cGround,
+		CoralSource: cSource,
+		AlgaeGround: ground,
+		AlgaeSource: source,
 	}
 }
 
@@ -232,59 +215,16 @@ func compileAutoData(entries []TeamData) AutoData {
 	}
 }
 
-// Compiles climbing data from all entries
-func compileClimbData(entries []TeamData) ClimbingData {
-	var success bool = false
-	var times []float64
-
-	for _, entry := range entries {
-		if entry.Climb.Succeeded {
-			success = true
-		}
-
-		if entry.Climb.Time > 0 {
-			times = append(times, entry.Climb.Time)
-		}
-	}
-	timeAvgd, err := stats.Mean(times)
-
-	if err != nil {
-		if errors.Is(err, stats.EmptyInput) {
-			timeAvgd = 0
-		} else {
-			greenlogger.LogErrorf(err, "Error finding mean of %v for climb times", times)
-		}
-	}
-
-	return ClimbingData{
-		Succeeded: success,
-		Time:      timeAvgd,
-	}
-}
+//TODO: ENDGAME compile MULTI
 
 // Returns if any scouter recorded a park
 func compileParked(entries []TeamData) bool {
 	for _, entry := range entries {
-		if entry.Misc.Parked {
+		if entry.Endgame.ParkStatus > 3 {
 			return true
 		}
 	}
 	return false
-}
-
-// Averages out the trap scores from all scouters
-func compileTrapScore(entries []TeamData) int {
-	var trapScores []float64
-	for _, entry := range entries {
-		trapScores = append(trapScores, float64(entry.Trap.Score))
-	}
-
-	trapAvgd, err := stats.Mean(trapScores)
-	if err != nil {
-		greenlogger.LogErrorf(err, "Error finding mean of %v for trap scores", trapScores)
-	}
-
-	return int(math.Round(trapAvgd))
 }
 
 // Combines the notes from all passed in scouters

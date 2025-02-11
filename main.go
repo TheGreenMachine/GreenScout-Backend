@@ -30,7 +30,7 @@ func main() {
 	/// Setup
 	isSetup := slices.Contains(os.Args, "setup")
 	publicHosting := false //Allows setup to bypass ip and domain validation to run localhost
-	serveTLS := false
+	serveTLS := false      //switches it between https and http [true for https]
 	updateDB := false
 
 	if isSetup && filemanager.IsSudo() {
@@ -130,14 +130,14 @@ func main() {
 				keyPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "server.key")
 			}
 
-			jSrv.Addr = ":8443"
+			jSrv.Addr = ":8443" //https
 			err := jSrv.ListenAndServeTLS(crtPath, keyPath)
 			if err != nil {
 				greenlogger.FatalError(err, "jSrv.ListendAndServeTLS() failed")
 			}
 
 		} else {
-			jSrv.Addr = ":8080"
+			jSrv.Addr = ":8080" //http
 			err := jSrv.ListenAndServe()
 			if err != nil {
 				greenlogger.FatalError(err, "jSrv.ListendAndServe() failed")
@@ -149,7 +149,7 @@ func main() {
 		setup.EnsureExternalConnectivity()
 	}
 
-	greenlogger.LogMessage("Server Successfully Set Up!")
+	greenlogger.LogMessage("Server Successfully Set Up! [ctrl+c to cancel]")
 	if constants.CachedConfigs.SlackConfigs.UsingSlack {
 		greenlogger.NotifyOnline(true)
 	}
