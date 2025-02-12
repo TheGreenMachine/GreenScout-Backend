@@ -277,6 +277,52 @@ func GetAutoAccuracy(auto AutoData) any {
 	}
 	return (float64(auto.Scores) / float64(attempts)) * 100
 }
+func CompileNotes(team TeamData) string {
+	var finalNote string = ""
+	if team.Misc.LostTrack {
+		finalNote += "LOST TRACK; "
+	}
+
+	if team.Misc.DC {
+		finalNote += "DISCONNECTED; "
+	}
+
+	if len(team.Penalties) > 0 {
+		finalNote += "PENALTIES= " + strings.Join(team.Penalties, ",") + "; "
+	}
+
+	finalNote += team.Notes
+	return finalNote
+}
+
+// Compiles Losing track, DCs, and notes into one string of notes.
+// Used for multi-scouting only
+func CompileNotes2(match MultiMatch, teams []TeamData) string {
+	var finalNote string = ""
+	var lostTrack bool = false
+	var DC bool = false
+
+	for _, entry := range teams {
+		if entry.Misc.LostTrack {
+			lostTrack = true
+		}
+
+		if entry.Misc.DC {
+			DC = true
+		}
+	}
+
+	if lostTrack {
+		finalNote += "LOST TRACK; "
+	}
+
+	if DC {
+		finalNote += "DISCONNECTED; "
+	}
+
+	finalNote += strings.Join(match.Notes, "; ")
+	return finalNote
+}
 
 // Returns if a file exists in Teamlists matching the passed in event key
 func CheckForTeamLists(eventKey string) bool {
@@ -438,6 +484,25 @@ func GetRow(team TeamData) int {
 	startRow += uint(dsOffset)
 
 	return int(startRow)
+}
+
+// Gets the parking status of the robot
+func GetParkStatus(data EndgameData) any {
+
+	if data.ParkStatus == 1 {
+		return "Failed Attempted to Park"
+	} else if data.ParkStatus == 2 {
+		return "Failed Attempted Shallow Climb"
+	} else if data.ParkStatus == 3 {
+		return "Failed Attempted Deep Climb"
+	} else if data.ParkStatus == 4 {
+		return "Parked in the Barge"
+	} else if data.ParkStatus == 5 {
+		return "Climbed Shallow Cage"
+	} else if data.ParkStatus == 6 {
+		return "Climbed Deep Cage"
+	}
+	return "Didn't Attempt to Park"
 }
 
 // Gets the row a pit scouting data should write to

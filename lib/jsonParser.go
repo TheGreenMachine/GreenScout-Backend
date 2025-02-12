@@ -198,6 +198,7 @@ type PitScoutingData struct {
 	TeamNumber int `json:"Team"` // The team number
 	// PitIdentifier string `json:"Pit"`     // The pit identifier, as seen on the pit map
 	Scouter string `json:"Scouter"` // The person who did the pit scouting
+	Notes   string `json:"Notes"`   // Other notes
 
 	Drivetrain          string    `json:"Drive Train"`                                   // The type of drivetrain the robot has
 	GearRatio           string    `json:"Gear Ratio"`                                    //  The type of gearratio the robot has
@@ -212,8 +213,7 @@ type PitScoutingData struct {
 	Shallow             bool      `json:"Can Climb Shallow Cage"`                        //Whether it used the shallow climb
 	Deep                bool      `json:"Can Climb Deep Cage"`                           //Whether it used the deep climb
 	RobotTypeCompliment string    `json:"What Type of Robot Would Compliment You Best?"` //Question for pit scouting
-	FavoritePart        string    `json:"Favorite Part of the Robot?"`                   //Question for pit scouting
-	Notes               string    `json:"Notes"`                                         //Notes for other relevant information
+	FavoritePart        string    `json:"Favorite Part of the Robot?"`                   //Question for pit scouting                               //Notes for other relevant information
 }
 
 // Pit scouting data regarding distance shooting
