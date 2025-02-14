@@ -200,6 +200,10 @@ type PitScoutingData struct {
 	Scouter string `json:"Scouter"` // The person who did the pit scouting
 	Notes   string `json:"Notes"`   // Other notes
 
+	Weight  string `json:"Weight"`          //The Weight of the robot
+	AutoNum string `json:"Number of Autos"` //Number of Autos
+	Dynamic bool   `json:"Dyanamic Auto?"`  //Whether or not the team has dynamic autos
+
 	Drivetrain          string    `json:"Drive Train"`                                   // The type of drivetrain the robot has
 	GearRatio           string    `json:"Gear Ratio"`                                    //  The type of gearratio the robot has
 	Coral               CoralData `json:"Coral Position"`                                //The position of the coral on the reef

@@ -135,7 +135,6 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		matchdata.Auto.Ejects,                     // Auto shuttles
 		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon
 		matchdata.Parked,                      // Parked
-		matchdata.Parked,                      // Parked
 		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
 
@@ -372,6 +371,9 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 	valuesToWrite := []interface{}{
 		pitData.TeamNumber,          //Team Number
 		pitData.Scouter,             //Person/people who pit scouted
+		pitData.Weight,              //The weight of the robot
+		pitData.AutoNum,             //The number of autos they have
+		pitData.Dynamic,             //Whether they have dynamic autos
 		pitData.Drivetrain,          //The type of drivetrain
 		pitData.GearRatio,           //The GearRatio on the top of my head
 		pitData.Coral,               //The position(s) their robot is able to score
