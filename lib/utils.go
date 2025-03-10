@@ -114,6 +114,38 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 		numNets / float64(numCycles),
 		numShuttles / float64(numCycles)
 }
+func GetAlgaePosAsString(positions AlgaeData) string {
+	if positions.L2 && positions.L3 {
+		return "BOTH"
+	}
+
+	if positions.L2 {
+		return "A1/L2"
+	} else if positions.L3 {
+		return "A2/L3"
+	} else {
+		return "NONE"
+	}
+}
+func GetCoralPosAsString(positions CoralData) string {
+	var result []string
+	if positions.L1 {
+		result = append(result, "L1")
+	}
+	if positions.L2 {
+		result = append(result, "L2")
+	}
+	if positions.L3 {
+		result = append(result, "L3")
+	}
+	if positions.L4 {
+		result = append(result, "L4")
+	}
+	if len(result) == 0 {
+		return "NONE"
+	}
+	return strings.Join(result, ", ")
+}
 
 // Calculates the accuracies of amp, speaker, shuttling, and distance shooting from an array of cycles, returning N/A for any that had 0 attempts.
 // Returns: Accuracy of AMP, SPEAKER, DISTANCE, SHUTTLE
@@ -245,8 +277,6 @@ func GetAutoAccuracy(auto AutoData) any {
 	}
 	return (float64(auto.Scores) / float64(attempts)) * 100
 }
-
-// Compiles Losing track, DCs, penalties, and notes into one string of notes
 func CompileNotes(team TeamData) string {
 	var finalNote string = ""
 	if team.Misc.LostTrack {
@@ -583,22 +613,4 @@ func MoveFile(originalPath string, newPath string) bool {
 	}
 
 	return true
-}
-
-// Gets the distance a robot can shoot from, returning N/A if it has no ability to do so.
-func GetDistance(data PitScoutingData) any {
-	if data.Distance.Can {
-		return int(data.Distance.Distance)
-	}
-
-	return "N/A"
-}
-
-// Gets the time a robot takes to climb, returning N/A if it doesn't do so in endgame.
-func GetClimbTime(data PitScoutingData) any {
-	if data.EndgameBehavior == "Climb" {
-		return data.ClimbTime
-	}
-
-	return "N/A"
 }
