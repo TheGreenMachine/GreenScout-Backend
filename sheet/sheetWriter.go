@@ -106,8 +106,8 @@ func SetupSheetsAPI(b []byte) {
 
 // Writes team data from multi-scouting to a specified line
 func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources []lib.TeamData) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
@@ -126,6 +126,8 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		processorAccuracy,                         // Processor accuracy
 		math.Round(netTendency*10000) / 100,       // Net tendency
 		netAccuracy,                               // Bet accuracy
+		math.Round(knockTendency*10000) / 100,     // Knock tendency
+		knockAccuracy,                             // Knock accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
 		shuttleAccuracy,                           // Shuttle accuracy
 		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns.
@@ -155,8 +157,8 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 
 // Writes data from a single-scouted match to a line
 func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		teamData.TeamNumber,                       // Team Number
@@ -172,6 +174,8 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 		L4Accuracy,                                // L4 Coral accuracy
 		math.Round(processorTendency*10000) / 100, // Processor tendency
 		processorAccuracy,                         // Processor accuracy
+		math.Round(knockTendency*10000) / 100,     // Knock tendency
+		knockAccuracy,                             // Knock accuracy
 		math.Round(netTendency*10000) / 100,       // Net tendency
 		netAccuracy,                               // Net accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency

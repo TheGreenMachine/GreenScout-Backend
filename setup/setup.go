@@ -118,7 +118,7 @@ func TotalSetup(publicHosting bool) {
 
 	// TBA API package
 	greenlogger.LogMessage("Ensuring TBA API python package...")
-	downloadAPIPackage()
+	downloadAPIPackage() //TODO: Maybe a find a SHA1 hash, or test if a python cmd fails (file not found)
 	greenlogger.LogMessage("API package downloaded")
 
 	// Network

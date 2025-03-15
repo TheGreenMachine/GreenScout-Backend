@@ -72,9 +72,9 @@ func GetCycleAccuracy(cycles []Cycle) any {
 
 // Calculates the tendencies of amp, speaker, shuttling, and distance shooting from an array of cycles.
 // Returns: Tendency to AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, float64, float64, float64) {
+func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, float64, float64, float64, float64) {
 	if len(cycles) < 1 {
-		return 0, 0, 0, 0, 0, 0, 0
+		return 0, 0, 0, 0, 0, 0, 0, 0
 	}
 
 	var numTrough float64
@@ -83,6 +83,7 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 	var numL4 float64
 	var numProcessors float64
 	var numNets float64
+	var numKnocks float64
 	var numShuttles float64
 
 	numCycles := len(cycles)
@@ -99,6 +100,8 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 			numL4++
 		case "Processor":
 			numProcessors++
+		case "Knock":
+			numKnocks++
 		case "Net":
 			numNets++
 		case "Shuttle":
@@ -112,6 +115,7 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 		numL4 / float64(numCycles),
 		numProcessors / float64(numCycles),
 		numNets / float64(numCycles),
+		numKnocks / float64(numKnocks),
 		numShuttles / float64(numCycles)
 }
 func GetAlgaePosAsString(positions AlgaeData) string {
@@ -149,7 +153,7 @@ func GetCoralPosAsString(positions CoralData) string {
 
 // Calculates the accuracies of amp, speaker, shuttling, and distance shooting from an array of cycles, returning N/A for any that had 0 attempts.
 // Returns: Accuracy of AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
+func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any, any) {
 	if cyclesAreValid(cycles) {
 		troughAttempted, troughMade := 0, 0
 		L2Attempted, L2Made := 0, 0
@@ -157,6 +161,7 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 		L4Attempted, L4Made := 0, 0
 		processorsAttempted, processorsMade := 0, 0
 		netsAttempted, netsMade := 0, 0
+		knocksAttempted, knocksMade := 0, 0
 		shuttlesAttempted, shuttlesMade := 0, 0
 
 		for _, cycle := range cycles {
@@ -203,6 +208,13 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 						netsMade++
 					}
 				}
+			case "Knock":
+				{
+					knocksAttempted++
+					if cycle.Success {
+						knocksMade++
+					}
+				}
 			case "Shuttle":
 				{
 					shuttlesAttempted++
@@ -220,6 +232,7 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 		var processorAccuracy any
 		var netsAccuracy any
 		var shuttleAccuracy any
+		var knockAccuracy any
 
 		if troughAttempted == 0 {
 			troughAccuracy = "N/A"
@@ -257,15 +270,21 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any) {
 			netsAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
+		if knocksAttempted == 0 {
+			knockAccuracy = "N/A"
+		} else {
+			knockAccuracy = (float64(knocksMade) / float64(knocksAttempted)) * 100
+		}
+
 		if shuttlesAttempted == 0 {
 			shuttleAccuracy = "N/A"
 		} else {
 			shuttleAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
 		}
 
-		return troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netsAccuracy, shuttleAccuracy
+		return troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netsAccuracy, knockAccuracy, shuttleAccuracy
 	}
-	return "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+	return "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/a"
 }
 
 // Gets the accuracy of a robot during an autonomous period, returning N/A if 0 attempts were made
