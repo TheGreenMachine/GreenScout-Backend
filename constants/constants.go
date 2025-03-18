@@ -38,6 +38,8 @@ var DefaultLogDirectory = "logs"
 var DefaultTeamsDirectory = "teams"
 var DefaultCertsDirectory = "certs"
 
+var EnableHttps = true
+
 var RSAPubKeyPath string
 var RSAPrivateKeyPath string
 var SheetsTokenFile string
