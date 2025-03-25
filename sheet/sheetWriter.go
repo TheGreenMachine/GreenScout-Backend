@@ -106,8 +106,8 @@ func SetupSheetsAPI(b []byte) {
 
 // Writes team data from multi-scouting to a specified line
 func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources []lib.TeamData) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
@@ -126,6 +126,8 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		processorAccuracy,                         // Processor accuracy
 		math.Round(netTendency*10000) / 100,       // Net tendency
 		netAccuracy,                               // Bet accuracy
+		math.Round(knockTendency*10000) / 100,     // Knock tendency
+		knockAccuracy,                             // Knock accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
 		shuttleAccuracy,                           // Shuttle accuracy
 		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns.
@@ -155,8 +157,8 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 
 // Writes data from a single-scouted match to a line
 func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		teamData.TeamNumber,                       // Team Number
@@ -172,6 +174,8 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 		L4Accuracy,                                // L4 Coral accuracy
 		math.Round(processorTendency*10000) / 100, // Processor tendency
 		processorAccuracy,                         // Processor accuracy
+		math.Round(knockTendency*10000) / 100,     // Knock tendency
+		knockAccuracy,                             // Knock accuracy
 		math.Round(netTendency*10000) / 100,       // Net tendency
 		netAccuracy,                               // Net accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
@@ -369,19 +373,27 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		pitData.TeamNumber,        // Team Number
-		pitData.PitIdentifier,     // Pit Identifier
-		pitData.Drivetrain,        // Drivetrain type
-		pitData.Distance.Can,      // Can distance at all
-		lib.GetDistance(pitData),  // Distance from which shooting is possible
-		pitData.AutoScores,        // Auto Scores
-		pitData.MiddleControls,    // Middle notes controllable in auto
-		pitData.NoteDetection,     // Has note detection
-		pitData.Cycles,            // Avg cycles
-		pitData.DriverExperience,  // Driver years of experience
-		pitData.BotType,           // ex. Amp, Speaker, Defense
-		pitData.EndgameBehavior,   // Climb or park basically
-		lib.GetClimbTime(pitData), // Time to climb
+		pitData.TeamNumber,          //Team Number
+		pitData.Scouter,             //Person/people who pit scouted
+		pitData.Weight,              //The weight of the robot
+		pitData.AutoNum,             //The number of autos they have
+		pitData.Dynamic,             //Whether they have dynamic autos
+		pitData.Drivetrain,          //The type of drivetrain
+		pitData.GearRatio,           //The GearRatio on the top of my head
+		pitData.Coral,               //The position(s) their robot is able to score
+		pitData.Algae,               //The position(s) their robot is able to score
+		pitData.AlgaeGround,         //Whether it can collect algae from the ground
+		pitData.AlgaeSource,         //Whether it can collect algae from the source
+		pitData.Cycle,               //Their cycle time
+		pitData.Experience,          //The driver's experience
+		pitData.Teleop,              //The strategy for teleop??
+		pitData.Endgame,             //The strategy for endgame
+		pitData.Shallow,             //Whether it can shallow climb
+		pitData.Deep,                //Whether it can deep climb
+		pitData.RobotTypeCompliment, //What part of the robot compliments you?
+		pitData.FavoritePart,        //Favortite part of the robot
+		pitData.Notes,               //Other Notes
+
 	}
 
 	var vr sheets.ValueRange

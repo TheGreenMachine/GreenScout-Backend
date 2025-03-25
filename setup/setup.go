@@ -119,7 +119,7 @@ func TotalSetup(publicHosting bool) {
 	// TBA API package
 	greenlogger.LogMessage("Ensuring TBA API python package...")
 	downloadAPIPackage()
-	greenlogger.LogMessage("API package downloaded")
+	greenlogger.LogMessage("API package present")
 
 	// Network
 	if publicHosting {
@@ -725,22 +725,28 @@ func ensureDatabasesExist(configs constants.GeneralConfigs) {
 	}
 }
 
-// Downloads the tba api client for python. Always runs, just to be safe. If it cannot install with either pip or pip3, it will fatal.
+// Downloads the tba api client for python. If it cannot install with either pip or pip3, it will fatal.
 func downloadAPIPackage() {
-	runnable := exec.Command("pip", "install", "git+https://github.com/TBA-API/tba-api-client-python.git")
-	_, execErr := runnable.Output()
+	c := exec.Command("py", "test.py") //This file legit only has lines of code attempting to import the TBA API, if it fails, it'll throw an exception and the code below will install the API.
 
-	if execErr != nil && !strings.Contains(execErr.Error(), "exit status 1") {
-		greenlogger.LogError(execErr, "Problem executing pip install git+https://github.com/TBA-API/tba-api-client-python.git")
-		greenlogger.LogMessage("Attempting to run with pip3...")
+	if err := c.Run(); err != nil {
+		greenlogger.LogError(err, "woa")
+		runnable := exec.Command("pip", "install", "git+https://github.com/TBA-API/tba-api-client-python.git")
+		_, execErr := runnable.Output()
 
-		runnable = exec.Command("pip3", "install", "git+https://github.com/TBA-API/tba-api-client-python.git")
-		_, err := runnable.Output()
-		if err != nil && !strings.Contains(err.Error(), "exit status 1") {
-			greenlogger.FatalError(err, "Could not install tba-api-client-python with pip or pip3! Please ensure you have pip in your $PATH")
+		if execErr != nil && !strings.Contains(execErr.Error(), "exit status 1") {
+			greenlogger.LogError(execErr, "Problem executing pip install git+https://github.com/TBA-API/tba-api-client-python.git")
+			greenlogger.LogMessage("Attempting to run with pip3...")
+
+			runnable = exec.Command("pip3", "install", "git+https://github.com/TBA-API/tba-api-client-python.git")
+			_, err := runnable.Output()
+			if err != nil && !strings.Contains(err.Error(), "exit status 1") {
+				greenlogger.FatalError(err, "Could not install tba-api-client-python with pip or pip3! Please ensure you have pip in your $PATH")
+			}
 		}
+	} else {
+		greenlogger.ELogMessage("Gasp")
 	}
-
 }
 
 // Runs the slack ensurance routine.

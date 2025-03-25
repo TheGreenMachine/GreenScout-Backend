@@ -44,7 +44,7 @@ func main() {
 		}
 
 		publicHosting = true
-		serveTLS = true
+		serveTLS = constants.EnableHttps
 		updateDB = false
 	}
 
