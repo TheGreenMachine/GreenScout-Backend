@@ -111,6 +111,7 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
+		matchdata.Match, 
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,

@@ -26,6 +26,7 @@ type TeamData struct {
 	Misc          MiscData          `json:"Misc"`             // Miscellaneous data
 	Penalties     []string          `json:"Penalties"`        // Recorded penalties
 	Rescouting    bool              `json:"Rescouting"`       // If this match is rescouting (Will override all previous data of this match with this driverstation)
+	Prescouting   bool              `json:"Prescouting"`      // If this match is rescouting (Will override all previous data of this match with this driverstation)
 	Notes         string            `json:"Notes"`            // Notes from the scouter
 }
 
