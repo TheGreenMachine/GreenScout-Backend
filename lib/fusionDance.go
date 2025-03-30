@@ -51,7 +51,7 @@ func CompileMultiMatch(entries ...TeamData) MultiMatch {
 
 	finalData.Auto = compileAutoData(entries)
 
-	//TODO: DO MULTISCOUTING ENDGAME
+	//TODO: DO MULTISCOUTING ENDGAME -Leon
 
 	finalData.Parked = compileParked(entries)
 
@@ -215,7 +215,7 @@ func compileAutoData(entries []TeamData) AutoData {
 	}
 }
 
-//TODO: ENDGAME compile MULTI
+//TODO: ENDGAME compile MULTI -Leon
 
 // Returns if any scouter recorded a park
 func compileParked(entries []TeamData) bool {

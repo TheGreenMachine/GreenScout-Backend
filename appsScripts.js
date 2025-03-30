@@ -32,7 +32,7 @@ function GETSCOUTER(match, color, driverStation) {
     'payload' : formData
   };
   
-  var response = UrlFetchApp.fetch('https://tagciccone.com/scouterLookup', options);
+  var response = UrlFetchApp.fetch('https://tagciccone.com/scouterLookup', options); //TODO: Probably change this
   return response.getContentText()
   }
   
@@ -50,16 +50,12 @@ function GETSCOUTER(match, color, driverStation) {
     "I couldnt think of any more quotes",
     "No, I will not be telling you every quote I put in here.",
     "Are you cooked or are you cooking?",
-    'Remind Aahill to do his webwork',
+    'Remind Aahil to do his webwork',
     'Remind Ethan to do his webwork',
     'Drew Cole 秃头书呆子',
-    'Please refrain from bothering Tag about the app',
     'Should you be looking at this, or doing strategy?',
-    'Luka Dončić is Devin Booker father',
     'Be like Usain Bolt wearing heelys.',
-    'Do you know where Vihaan is? ',
     'Did you lose the plot, or could it just not keep up with you?',
-    '"feet" -Elena',
     'Monster energy is not a substitute for sleeping.',
     'Getting a buzzcut is a good life choice.',
     'Lock in.',
@@ -71,15 +67,13 @@ function GETSCOUTER(match, color, driverStation) {
     'Deodorant is a good choice to make.',
     'The Sun is Sunny.',
     "Compartmentalization is healthy if you don't think about it.",
-    "At least you're not in the duluth stands. Unless you are in which case tough I guess?",
+    "At least you're not in the Duluth stands. Unless you are in which case tough I guess?",
     "Go Knicks!",
     "876 💙",
     "18! 16!",
-    "How many times has Vihaan missed shop? 1816!",
     "Woolsey is wrong the halo show sucks",
     "Check out the newest project from Tag and Micheal: Currently unnamed study tool!",
     "Rithwik Barbados Barber",
-    "No Celtics fans please",
     "Naz Reid.",
     ]
   

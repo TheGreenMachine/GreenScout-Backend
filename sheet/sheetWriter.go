@@ -111,7 +111,8 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		matchdata.Match, 
+		lib.GetDSString(matchdata.DriverStation.IsBlue, uint(matchdata.DriverStation.Number)),
+		matchdata.Match,
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,
@@ -131,12 +132,12 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		knockAccuracy,                             // Knock accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
 		shuttleAccuracy,                           // Shuttle accuracy
-		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns.
+		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns. -Leon
 		matchdata.Auto.Can,                        // Had Auto
 		matchdata.Auto.Scores,                     // Scores in auto
 		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
 		matchdata.Auto.Ejects,                     // Auto shuttles
-		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon
+		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon -Leon
 		matchdata.Parked,                      // Parked
 		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
@@ -162,6 +163,8 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
+		lib.GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
+		teamData.Match,                            // Match Number
 		teamData.TeamNumber,                       // Team Number
 		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
 		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
