@@ -495,7 +495,7 @@ func GetDSOffset(ds string) int {
 }
 
 // Gets the row an entry will write to from its Teamdata object
-func GetRow(team TeamData) int {
+func GetRow(team TeamData) int { //TODO: Update so it doesn't rely on match # -Leon
 	startRow := 2 + (team.Match.Number-1)*6
 	dsString := GetDSString(team.DriverStation.IsBlue, uint(team.DriverStation.Number))
 	dsOffset := GetDSOffset(dsString)
