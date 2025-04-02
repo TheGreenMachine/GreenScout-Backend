@@ -237,37 +237,37 @@ func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any, any)
 		if troughAttempted == 0 {
 			troughAccuracy = "N/A"
 		} else {
-			troughAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+			troughAccuracy = (float64(troughMade) / float64(troughAttempted)) * 100
 		}
 
 		if L2Attempted == 0 {
 			L2Accuracy = "N/A"
 		} else {
-			L2Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+			L2Accuracy = (float64(L2Made) / float64(L2Attempted)) * 100
 		}
 
 		if L3Attempted == 0 {
 			L3Accuracy = "N/A"
 		} else {
-			L3Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+			L3Accuracy = (float64(L3Made) / float64(L3Attempted)) * 100
 		}
 
 		if L4Attempted == 0 {
 			L4Accuracy = "N/A"
 		} else {
-			L4Accuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+			L4Accuracy = (float64(L4Made) / float64(L4Attempted)) * 100
 		}
 
 		if processorsAttempted == 0 {
 			processorAccuracy = "N/A"
 		} else {
-			processorAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+			processorAccuracy = (float64(processorsMade) / float64(processorsAttempted)) * 100
 		}
 
 		if netsAttempted == 0 {
 			netsAccuracy = "N/A"
 		} else {
-			netsAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
+			netsAccuracy = (float64(netsMade) / float64(netsAttempted)) * 100
 		}
 
 		if knocksAttempted == 0 {
