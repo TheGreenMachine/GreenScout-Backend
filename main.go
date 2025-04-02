@@ -29,8 +29,8 @@ func main() {
 
 	/// Setup
 	isSetup := slices.Contains(os.Args, "setup")
-	publicHosting := true //Allows setup to bypass ip and domain validation to run localhost
-	serveTLS := false     //switches it between https and http [true for https]
+	publicHosting := false //Allows setup to bypass ip and domain validation to run localhost
+	serveTLS := false      //switches it between https and http [true for https]
 	updateDB := false
 
 	if isSetup && filemanager.IsSudo() {
