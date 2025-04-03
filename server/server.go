@@ -113,7 +113,8 @@ func iterativeServerCall() {
 						)
 					}
 				} else { // Single scouting
-					successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
+					successfullyWrote = sheet.WriteTeamDataToLine(team, 2) //sheetWriter.go's append will make sure this won't override another bit of data
+					//successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
 				}
 
 				//Currently, there is no handling if one can't move. It will loop infinitley. This could be something to improve.
