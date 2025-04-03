@@ -207,7 +207,7 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 
 	writeRange := fmt.Sprintf("RawData!B%v", row)
 
-	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
+	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")
@@ -416,7 +416,7 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 
 	writeRange := fmt.Sprintf("PitScouting!B%v", row)
 
-	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
+	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")
