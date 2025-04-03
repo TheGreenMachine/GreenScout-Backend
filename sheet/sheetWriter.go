@@ -164,7 +164,7 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		lib.GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.Match,                            // Match Number
+		teamData.Match.Number,                     // Match Number
 		teamData.TeamNumber,                       // Team Number
 		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
 		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
@@ -204,6 +204,7 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")
+		greenlogger.LogMessagef("e:,")
 		return false
 	}
 
