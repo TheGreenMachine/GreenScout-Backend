@@ -113,7 +113,7 @@ func iterativeServerCall() {
 						)
 					}
 				} else { // Single scouting
-					successfullyWrote = sheet.WriteTeamDataToLine(team, 1000) //I'll use google sheet's to autosort based on the driver station and match
+					successfullyWrote = sheet.WriteTeamDataToLine(team, 2) //sheetWriter.go's append will make sure this won't override another bit of data
 					//successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
 				}
 
