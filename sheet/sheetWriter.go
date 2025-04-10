@@ -112,7 +112,7 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		lib.GetDSString(matchdata.DriverStation.IsBlue, uint(matchdata.DriverStation.Number)),
-		matchdata.Match,
+		matchdata.Match.Number,
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,
@@ -200,7 +200,7 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 
 	writeRange := fmt.Sprintf("RawData!B%v", row)
 
-	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
+	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")
@@ -407,7 +407,7 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 
 	writeRange := fmt.Sprintf("PitScouting!B%v", row)
 
-	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
+	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")

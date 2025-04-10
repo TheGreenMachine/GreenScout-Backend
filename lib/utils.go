@@ -115,7 +115,7 @@ func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, flo
 		numL4 / float64(numCycles),
 		numProcessors / float64(numCycles),
 		numNets / float64(numCycles),
-		numKnocks / float64(numKnocks),
+		numKnocks / float64(numCycles),
 		numShuttles / float64(numCycles)
 }
 func GetAlgaePosAsString(positions AlgaeData) string {

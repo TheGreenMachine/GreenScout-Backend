@@ -703,13 +703,15 @@ func recursivelyEnsureSpreadsheetID(id string) string {
 	} else {
 		greenlogger.LogMessagef("Google Sheets spreadsheet ID %v is invalid, or you don't have permission to access it. Please enter an id of a spreadsheet that will work. It may be that your access token has expired [delete token.json in the runtime directory]", id)
 	}
-	var newId string
-	_, scanErr := fmt.Scanln(&newId)
-	if scanErr != nil {
-		greenlogger.LogError(scanErr, "Problem scanning spreadsheet ID input")
-	}
+	// var newId string
+	// _, scanErr := fmt.Scanln(&newId)
+	// if scanErr != nil {
+	// 	greenlogger.LogError(scanErr, "Problem scanning spreadsheet ID input")
+	// }
 
-	return recursivelyEnsureSpreadsheetID(newId)
+	//return recursivelyEnsureSpreadsheetID(newId)
+	panic("WHYYYYYY (no sheet id)")
+	return ""
 }
 
 // Ensures that the databases auth.db and users.db exist. If not, it will exit the program.
