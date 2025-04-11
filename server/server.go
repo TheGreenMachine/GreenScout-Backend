@@ -58,7 +58,7 @@ func iterativeServerCall() {
 		file := allJson[0]
 
 		// Parse and write to spreadsheet
-		if len(strings.Split(file.Name(), "_")) == 2 { // Pit Scouting // TODO: Change how we seperate the JSON yeah? Also change JSON file name format too.
+		if len(strings.Split(file.Name(), "_")) == 2 { // Pit Scouting // TODO: Change how we seperate the JSON yeah? Also change JSON file name format too. -Leon
 			pit, hadErrs := lib.ParsePitScout(file.Name())
 
 			if !hadErrs {
@@ -113,7 +113,8 @@ func iterativeServerCall() {
 						)
 					}
 				} else { // Single scouting
-					successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
+					successfullyWrote = sheet.WriteTeamDataToLine(team, 2) //sheetWriter.go's append will make sure this won't override another bit of data
+					//successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
 				}
 
 				//Currently, there is no handling if one can't move. It will loop infinitley. This could be something to improve.
@@ -176,7 +177,7 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/keyChange", handleWithCORS(handleKeyChange, false))
 	http.HandleFunc("/sheetChange", handleWithCORS(handleSheetChange, false))
 
-	jsrv := &http.Server{
+	jsrv := &http.Server{ //TODO: love of god add an https thing -Leon
 		Addr: ":8443",
 		// ReadTimeout:  20 * time.Second,
 		// WriteTimeout: 20 * time.Second,
@@ -225,7 +226,7 @@ func postJson(writer http.ResponseWriter, request *http.Request) {
 			httpResponsef(writer, "Problem writing http response to Mangled JSON", ":(")
 		} else { // Handle successful unmarshalling
 			//EVENT_MATCH_{COLOR}{DSNUM}_SystemTimeMS
-			//TODO: file naming stuff here
+			//TODO: file naming stuff here -Leon
 			fileName := fmt.Sprintf(
 				"%s_%v_%s_%v",
 				lib.GetCurrentEvent(),

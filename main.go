@@ -50,7 +50,7 @@ func main() {
 
 	setup.TotalSetup(publicHosting)
 
-	sheet.WriteConditionalFormatting()
+	// sheet.WriteConditionalFormatting()
 	if isSetup { // Exit if only in setup mode
 		os.Exit(1)
 	}

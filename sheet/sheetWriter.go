@@ -111,6 +111,8 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
+		lib.GetDSString(matchdata.DriverStation.IsBlue, uint(matchdata.DriverStation.Number)),
+		matchdata.Match,
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,
@@ -130,12 +132,12 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 		knockAccuracy,                             // Knock accuracy
 		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
 		shuttleAccuracy,                           // Shuttle accuracy
-		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns.
+		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns. -Leon
 		matchdata.Auto.Can,                        // Had Auto
 		matchdata.Auto.Scores,                     // Scores in auto
 		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
 		matchdata.Auto.Ejects,                     // Auto shuttles
-		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon
+		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon -Leon
 		matchdata.Parked,                      // Parked
 		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
@@ -161,6 +163,8 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
+		lib.GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
+		teamData.Match.Number,                     // Match Number
 		teamData.TeamNumber,                       // Team Number
 		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
 		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
@@ -401,6 +405,59 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 	vr.Values = append(vr.Values, valuesToWrite)
 
 	writeRange := fmt.Sprintf("PitScouting!B%v", row)
+
+	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
+
+	if err != nil {
+		greenlogger.LogError(err, "Unable to write data to sheet")
+		return false
+	}
+
+	return true
+
+}
+
+// Writes data from a prescouted match to a line
+func WritePrescoutDataToLine(teamData lib.TeamData, row int) bool {
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
+	// This is ONE ROW. Each value is a cell in that row.
+	valuesToWrite := []interface{}{
+		lib.GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
+		teamData.TeamNumber,                       // Team Number
+		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
+		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
+		math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
+		troughAccuracy,                            // L1/Trough accuracy
+		math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
+		L2Accuracy,                                // L2 Coral accuracy
+		math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
+		L3Accuracy,                                // L3 Coral accuracy
+		math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
+		L4Accuracy,                                // L4 Coral accuracy
+		math.Round(processorTendency*10000) / 100, // Processor tendency
+		processorAccuracy,                         // Processor accuracy
+		math.Round(knockTendency*10000) / 100,     // Knock tendency
+		knockAccuracy,                             // Knock accuracy
+		math.Round(netTendency*10000) / 100,       // Net tendency
+		netAccuracy,                               // Net accuracy
+		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
+		shuttleAccuracy,                           // Shuttle accuracy
+		lib.GetPickupLocations(teamData.Pickups),  // Pickup positions
+		teamData.Auto.Can,                         // Had Auto
+		teamData.Auto.Scores,                      // Scores in auto
+		lib.GetAutoAccuracy(teamData.Auto),        // Auto accuracy
+		teamData.Auto.Ejects,                      // Auto shuttles
+		teamData.Endgame.Time,                     // Climb Time
+		lib.GetParkStatus(teamData.Endgame),       // Parked
+		lib.CompileNotes(teamData),                // Notes + Penalties + DC + Lost track
+	}
+
+	var vr sheets.ValueRange
+
+	vr.Values = append(vr.Values, valuesToWrite)
+
+	writeRange := fmt.Sprintf("Prescouting!B%v", row)
 
 	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
 
