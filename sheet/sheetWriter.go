@@ -325,7 +325,7 @@ func WriteConditionalFormatting() {
 								{
 									SheetId:          sheetID,
 									StartRowIndex:    1,
-									StartColumnIndex: 0,
+									StartColumnIndex: 1,
 									EndColumnIndex:   1,
 								},
 							},
@@ -356,7 +356,7 @@ func WriteConditionalFormatting() {
 								{
 									SheetId:          sheetID,
 									StartRowIndex:    1,
-									StartColumnIndex: 0,
+									StartColumnIndex: 1,
 									EndColumnIndex:   1,
 								},
 							},
