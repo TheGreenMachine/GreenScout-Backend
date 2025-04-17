@@ -306,6 +306,10 @@ func CompileNotes(team TeamData) string {
 		finalNote += "DISCONNECTED; "
 	}
 
+	if team.Prescouting {
+		finalNote += "PRESCOUTED; "
+	}
+
 	if len(team.Penalties) > 0 {
 		finalNote += "PENALTIES= " + strings.Join(team.Penalties, ",") + "; "
 	}
