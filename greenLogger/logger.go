@@ -32,20 +32,17 @@ func InitLogFile() {
 	logFileAlive = true
 }
 
-// Logs an error and its message according to a format specifier to the console, log file, and slack.
+// Logs an error and its message according to a format specifier to the console, and log file.
 // Params: The error, the message identifying that error as a format specifier, any args that fit into that format.
 func LogErrorf(err error, message string, args ...any) {
 	formatted := fmt.Sprintf(message, args...)
 	LogError(err, formatted)
 }
 
-// Logs an error and its message to the console, log file, and slack.
+// Logs an error and its message to the console and log file.
 // Params: The error, the message identifying that error
 func LogError(err error, message string) {
 	fmt.Println("ERR: " + message + ": " + err.Error())
-	if constants.CachedConfigs.SlackConfigs.UsingSlack && slackAlive {
-		NotifyError(err, message)
-	}
 	ElogError(err, message)
 }
 
@@ -94,18 +91,17 @@ func ElogError(err error, message string) {
 }
 
 // Logs a message to the console and log file, closes the log file, and crashes the server.
-// Only to be used in setup, BEFORE the slack integration has been enabled.
+// Only to be used in setup.
 func FatalLogMessage(message string) {
 	LogMessage("FATAL: " + message)
 	logFile.Close()
 	os.Exit(1)
 }
 
-// Logs an error and its message to the console, log file, and slack before closign the log file and crashing the server.
+// Logs an error and its message to the console and log file before closign the log file and crashing the server.
 func FatalError(err error, message string) {
 	LogError(err, "FATAL: "+message)
 	logFile.Close()
-	NotifyOnline(false)
 	os.Exit(1)
 }
 
