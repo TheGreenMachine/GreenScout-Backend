@@ -29,23 +29,30 @@ import (
 
 // Runs the infinite server loop with a looptime of 5 seconds.
 func RunServerLoop() {
+	fmt.Println("START OF SERVER LOOP")
 	ticker := time.NewTicker(5 * time.Second)
 	quit := make(chan struct{})
+	fmt.Println("E")
 	func() {
+		fmt.Println("Server Loop Running")
 		for {
 			select {
 			case <-ticker.C:
-				go iterativeServerCall()
+				fmt.Println("TICKER??")
+				// go iterativeServerCall()
 			case <-quit:
+				fmt.Println("QUIT CHAN??")
 				ticker.Stop()
 				return
 			}
 		}
 	}()
+	fmt.Println("END OF SERVER LOOP")
 }
 
 // The call to read and parse one file in InputtedJson
 func iterativeServerCall() {
+	fmt.Println("iterServeCall")
 	allJson, readErr := os.ReadDir(constants.JsonInDirectory)
 	if readErr != nil {
 		greenlogger.LogErrorf(readErr, "Problem reading file %v", constants.JsonInDirectory)
@@ -97,7 +104,6 @@ func iterativeServerCall() {
 								if !lib.MoveFile(filepath.Join(constants.JsonWrittenDirectory, foundFile), filepath.Join(constants.JsonErroredDirectory, foundFile)) {
 									greenlogger.FatalLogMessage("File " + filepath.Join(constants.JsonWrittenDirectory, foundFile) + " unable to be moved to Errored, investigate this!")
 								} else {
-									greenlogger.NotifyMessage("Errors in processing " + filepath.Join(constants.JsonWrittenDirectory, foundFile) + ", moved to " + filepath.Join(constants.JsonErroredDirectory, foundFile))
 								}
 							}
 						}

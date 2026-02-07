@@ -11,6 +11,7 @@ import (
 	"GreenScoutBackend/sheet"
 	"GreenScoutBackend/userDB"
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -105,7 +106,7 @@ func main() {
 		go func() {
 			// HTTP redirect to HTTPS server
 			h := serverManager.HTTPHandler(nil)
-			greenlogger.FatalError(http.ListenAndServe(":http", h), "http.ListenAndServe() failed")
+			greenlogger.FatalError(http.ListenAndServe(":8000", h), "http.ListenAndServe() failed")
 		}()
 
 	}
@@ -150,9 +151,6 @@ func main() {
 	}
 
 	greenlogger.LogMessage("Server Successfully Set Up! [ctrl+c to cancel]")
-	if constants.CachedConfigs.SlackConfigs.UsingSlack {
-		greenlogger.NotifyOnline(true)
-	}
 
 	go server.RunServerLoop()
 
@@ -162,11 +160,6 @@ func main() {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
-	// Wait for termination signal
-	<-signalCh
-	if constants.CachedConfigs.SlackConfigs.UsingSlack {
-		greenlogger.NotifyOnline(false)
-	}
-
 	// no need to os.exit, since the main thread exits here all the goroutines will shut down
+	fmt.Println("AAAAAAA")
 }

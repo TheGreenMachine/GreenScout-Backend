@@ -43,9 +43,6 @@ func LogErrorf(err error, message string, args ...any) {
 // Params: The error, the message identifying that error
 func LogError(err error, message string) {
 	fmt.Println("ERR: " + message + ": " + err.Error())
-	if constants.CachedConfigs.SlackConfigs.UsingSlack && slackAlive {
-		NotifyError(err, message)
-	}
 	ElogError(err, message)
 }
 
@@ -99,7 +96,6 @@ func FatalLogMessage(message string) {
 func FatalError(err error, message string) {
 	LogError(err, "FATAL: "+message)
 	logFile.Close()
-	NotifyOnline(false)
 	os.Exit(1)
 }
 
