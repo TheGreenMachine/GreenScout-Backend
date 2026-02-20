@@ -63,6 +63,12 @@ func LogMessagef(message string, args ...any) {
 	ELogMessage(formatted)
 }
 
+func FatalLogMessagef(message string, args ...any) {
+	formatted := fmt.Sprintf(message, args...)
+	fmt.Println(formatted)
+	os.Exit(1)
+}
+
 // Exclusively logs a message to the log file
 func ELogMessage(message string) {
 	if logFileAlive {

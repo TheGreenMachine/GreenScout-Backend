@@ -38,6 +38,7 @@ func TotalSetup(publicHosting bool) {
 	// Config retrieval
 	greenlogger.LogMessage("Retreiving configs...")
 	configs := retrieveGeneralConfigs()
+	constants.CachedConfigs = configs
 	greenlogger.LogMessagef("General configs retrieved: %v", configs)
 
 	workingDir, err := os.Getwd()
@@ -199,7 +200,6 @@ func TotalSetup(publicHosting bool) {
 	}
 
 	/// writing
-
 	configFile, openErr := filemanager.OpenWithPermissions(constants.ConfigFilePath)
 	if openErr != nil {
 		greenlogger.LogErrorf(openErr, "Problem creating %v", constants.ConfigFilePath)
@@ -213,9 +213,6 @@ func TotalSetup(publicHosting bool) {
 	if encodeErr != nil {
 		greenlogger.LogErrorf(encodeErr, "Problem encoding %v", configs)
 	}
-
-	// Write to memory
-	constants.CachedConfigs = configs
 
 	greenlogger.LogMessagef("Setup finished! If you need to alter configurations any further, please check %v", constants.ConfigFilePath)
 }
