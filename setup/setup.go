@@ -38,7 +38,6 @@ func TotalSetup(publicHosting bool) {
 	// Config retrieval
 	greenlogger.LogMessage("Retreiving configs...")
 	configs := retrieveGeneralConfigs()
-	constants.CachedConfigs = configs
 	greenlogger.LogMessagef("General configs retrieved: %v", configs)
 
 	workingDir, err := os.Getwd()
@@ -118,9 +117,9 @@ func TotalSetup(publicHosting bool) {
 	greenlogger.LogMessage("Schedule database confirmed to exist")
 
 	// TBA API package
-	// greenlogger.LogMessage("Ensuring TBA API python package...")
-	// downloadAPIPackage()
-	// greenlogger.LogMessage("API package present")
+	greenlogger.LogMessage("Ensuring TBA API python package...")
+	downloadAPIPackage()
+	greenlogger.LogMessage("API package present")
 
 	// Network
 	if publicHosting {
@@ -139,14 +138,14 @@ func TotalSetup(publicHosting bool) {
 	}
 
 	// Python
-	// greenlogger.LogMessage("Ensuring python driver...")
-	// configs.PythonDriver = ensurePythonDriver(configs.PythonDriver)
-	// greenlogger.LogMessagef("Python driver validated: %v", configs.PythonDriver)
+	greenlogger.LogMessage("Ensuring python driver...")
+	configs.PythonDriver = ensurePythonDriver(configs.PythonDriver)
+	greenlogger.LogMessagef("Python driver validated: %v", configs.PythonDriver)
 
-	// // TBA API key
-	// greenlogger.LogMessage("Ensuring TBA API key...")
-	// configs.TBAKey = ensureTBAKey(configs)
-	// greenlogger.LogMessagef("TBA key validated: %v", configs.TBAKey)
+	// TBA API key
+	greenlogger.LogMessage("Ensuring TBA API key...")
+	configs.TBAKey = ensureTBAKey(configs)
+	greenlogger.LogMessagef("TBA key validated: %v", configs.TBAKey)
 
 	// Event key
 	greenlogger.LogMessage("Ensuring Event key...")
@@ -154,22 +153,22 @@ func TotalSetup(publicHosting bool) {
 	greenlogger.LogMessagef("Event key validated: %v", configs.EventKey)
 
 	// Events
-	// greenlogger.LogMessage("Writing all events to file...")
-	// lib.WriteEventsToFile(configs)
-	// greenlogger.LogMessage("All events written to file")
+	greenlogger.LogMessage("Writing all events to file...")
+	lib.WriteEventsToFile(configs)
+	greenlogger.LogMessage("All events written to file")
 
 	// More event config
 	if !constants.CustomEventKey {
 		/// TBA Event
 
 		// Schedule
-		// greenlogger.LogMessage("Writing event schedule to file...")
-		// lib.WriteScheduleToFile(configs)
-		// greenlogger.LogMessage("Event schedule written to file")
+		greenlogger.LogMessage("Writing event schedule to file...")
+		lib.WriteScheduleToFile(configs)
+		greenlogger.LogMessage("Event schedule written to file")
 
-		// // Teamlist
-		// lib.WriteTeamsToFile(configs)
-		// greenlogger.LogMessagef("Teams at %v written to file", configs.EventKey)
+		// Teamlist
+		lib.WriteTeamsToFile(configs)
+		greenlogger.LogMessagef("Teams at %v written to file", configs.EventKey)
 	} else {
 		/// Custom event
 		configs.CustomEventConfigs = configCustomEvent(configs)
@@ -182,8 +181,13 @@ func TotalSetup(publicHosting bool) {
 	}
 
 	// Spreadsheet ID
-	// configs.SpreadSheetID = recursivelyEnsureSpreadsheetID(configs.SpreadSheetID)
-	// greenlogger.LogMessagef("Spreadsheet ID %v verified...", configs.SpreadSheetID)
+	configs.SpreadSheetID = recursivelyEnsureSpreadsheetID(configs.SpreadSheetID)
+	greenlogger.LogMessagef("Spreadsheet ID %v verified...", configs.SpreadSheetID)
+
+	// Slack
+	greenlogger.LogMessage("Ensuring slack settings...")
+	configs.SlackConfigs = ensureSlackConfiguration(configs.SlackConfigs)
+	greenlogger.LogMessage("Slack configs verified")
 
 	// Logging
 	if !configs.LogConfigs.Configured {
@@ -195,6 +199,7 @@ func TotalSetup(publicHosting bool) {
 	}
 
 	/// writing
+
 	configFile, openErr := filemanager.OpenWithPermissions(constants.ConfigFilePath)
 	if openErr != nil {
 		greenlogger.LogErrorf(openErr, "Problem creating %v", constants.ConfigFilePath)
@@ -208,6 +213,9 @@ func TotalSetup(publicHosting bool) {
 	if encodeErr != nil {
 		greenlogger.LogErrorf(encodeErr, "Problem encoding %v", configs)
 	}
+
+	// Write to memory
+	constants.CachedConfigs = configs
 
 	greenlogger.LogMessagef("Setup finished! If you need to alter configurations any further, please check %v", constants.ConfigFilePath)
 }
@@ -739,6 +747,75 @@ func downloadAPIPackage() {
 	} else {
 		greenlogger.ELogMessage("Gasp")
 	}
+}
+
+// Runs the slack ensurance routine.
+func ensureSlackConfiguration(configs constants.SlackConfigs) constants.SlackConfigs {
+	var configsToReturn constants.SlackConfigs = configs
+	if !configs.Configured {
+		greenlogger.LogMessage(`Enable slack integration? Type "yes" if so, anything else if not.`)
+		var using string
+		_, scanErr := fmt.Scanln(&using)
+
+		if scanErr != nil {
+			greenlogger.LogError(scanErr, "Problem scanning response to slack integration toggle")
+		}
+
+		configsToReturn.UsingSlack = strings.Contains(using, "yes")
+	}
+
+	if configsToReturn.UsingSlack {
+		configsToReturn.BotToken = recursivelyEnsureSlackBotToken(configsToReturn.BotToken)
+		configsToReturn.Channel = recursivelyEnsureSlackChannel(configsToReturn.Channel)
+	}
+
+	configsToReturn.Configured = true
+
+	return configsToReturn
+}
+
+// Recursively ensures the validitiy of the slack bot token.
+func recursivelyEnsureSlackBotToken(token string) string {
+	if greenlogger.InitSlackAPI(token) {
+		return token
+	}
+
+	if token == "" {
+		greenlogger.LogMessage("Please enter a slack bot token. If you don't have one, follow the guide at slack/slack.md")
+	} else {
+		greenlogger.LogMessagef("Slack bot token %v is invalid, or it doesn't have the correct permissions. Please make sure you copied the bot token and followed the steps in slack/slack.md", token)
+	}
+
+	var inputtedToken string
+	_, scanErr := fmt.Scanln(&inputtedToken)
+
+	if scanErr != nil {
+		greenlogger.LogError(scanErr, "Problem scanning slack bot token input")
+	}
+
+	return recursivelyEnsureSlackBotToken(inputtedToken)
+}
+
+// Recursively ensures the slack channel is valid.
+func recursivelyEnsureSlackChannel(channel string) string {
+	if greenlogger.ValidateChannelAccess(channel) {
+		return channel
+	}
+
+	if channel == "" {
+		greenlogger.LogMessage("Please enter a slack channel name for the bot to write to.")
+	} else {
+		greenlogger.LogMessagef("Slack channel %v is invalid. Please make sure it is typed correctly, exists, and the bot has permission to write to it.", channel)
+	}
+
+	var inputtedChannel string
+	_, scanErr := fmt.Scanln(&inputtedChannel)
+
+	if scanErr != nil {
+		greenlogger.LogError(scanErr, "Problem scanning slack channel input")
+	}
+
+	return recursivelyEnsureSlackChannel(inputtedChannel)
 }
 
 // Runs the configuration routine for custom (non-TBA events)

@@ -31,11 +31,6 @@ func getClient(config *oauth2.Config) *http.Client {
 	tokFile := constants.SheetsTokenFile
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
-		client, _ := google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
-		if client != nil {
-			return client
-		}
-
 		tok = getTokenFromWeb(config)
 		saveToken(tokFile, tok)
 	}
@@ -93,22 +88,18 @@ var SpreadsheetId string
 var Srv *sheets.Service
 
 // Sets up the sheets API based on the credentials.json and token.json
-func SetupSheetsAPI(creds []byte) {
+func SetupSheetsAPI(b []byte) {
 	ctx := context.Background()
 
-	config, err := google.ConfigFromJSON(creds, "https://www.googleapis.com/auth/spreadsheets")
+	// If modifying these scopes, delete your previously saved token.json.
+	client, err := google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
 	if err != nil {
 		greenlogger.FatalError(err, "Unable to parse client secret file to config: %v")
 	}
-	client := getClient(config)
-
 	Srv, err = sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		greenlogger.FatalError(err, "Unable to retrieve Sheets client: %v")
 	}
-	greenlogger.LogMessagef("Client retrieved for: %v", Srv.UserAgent)
-
-	SpreadsheetId = constants.CachedConfigs.SpreadSheetID
 }
 
 // Writes team data from multi-scouting to a specified line
@@ -207,7 +198,7 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 
 	writeRange := fmt.Sprintf("RawData!B%v", row)
 
-	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
+	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")
@@ -293,11 +284,8 @@ func IsSheetValid(id string) bool {
 // Adds conditinoal formatting to the raw data tab.
 // This consists of two sinusoidal functions that ensure 3-red 3-blue coloring.
 func WriteConditionalFormatting() {
-	tabs, err := Srv.Spreadsheets.Get(SpreadsheetId).Do()
-	if err != nil {
-		greenlogger.LogError(err, "Failed to get tabs")
-		return
-	}
+
+	tabs, _ := Srv.Spreadsheets.Get(SpreadsheetId).Do()
 
 	var sheetID int64
 
@@ -378,7 +366,7 @@ func WriteConditionalFormatting() {
 	).Do()
 
 	if sheetErr != nil {
-		greenlogger.LogError(sheetErr, "Problem adding conditionall formatting.")
+		greenlogger.LogError(sheetErr, "Problem adding conditional formatting.")
 	}
 }
 
@@ -416,7 +404,7 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 
 	writeRange := fmt.Sprintf("PitScouting!B%v", row)
 
-	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
+	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
 
 	if err != nil {
 		greenlogger.LogError(err, "Unable to write data to sheet")

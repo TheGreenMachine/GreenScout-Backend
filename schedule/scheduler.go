@@ -103,7 +103,7 @@ func AddIndividualSchedule(name string, nameIsUUID bool, ranges ScoutRanges) {
 
 		rangeString = string(newRangeBytes)
 
-		_, resultErr := scoutDB.Exec("update individuals set schedule = ? where uuid = ?", rangeString, uuid)
+		_, resultErr := scoutDB.Exec("update individuals set ranges = ? where uuid = ?", rangeString, uuid)
 		if resultErr != nil {
 			greenlogger.LogErrorf(resultErr, "Problem executing sql command %v with args %v", "update individuals set ranges = ? where uuid = ?", []any{rangeString, uuid})
 		}
