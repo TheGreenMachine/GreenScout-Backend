@@ -56,7 +56,7 @@ func main() {
 
 	setup.TotalSetup(publicHosting)
 
-	// sheet.WriteConditionalFormatting()
+	sheet.WriteConditionalFormatting()
 	if isSetup { // Exit if only in setup mode
 		os.Exit(1)
 	}
@@ -156,9 +156,6 @@ func main() {
 	}
 
 	greenlogger.LogMessage("Server Successfully Set Up! [ctrl+c to cancel]")
-	if constants.CachedConfigs.SlackConfigs.UsingSlack {
-		greenlogger.NotifyOnline(true)
-	}
 
 	go server.RunServerLoop()
 
@@ -170,9 +167,6 @@ func main() {
 
 	// Wait for termination signal
 	<-signalCh
-	if constants.CachedConfigs.SlackConfigs.UsingSlack {
-		greenlogger.NotifyOnline(false)
-	}
 
 	// no need to os.exit, since the main thread exits here all the goroutines will shut down
 }

@@ -68,16 +68,7 @@ type GeneralConfigs struct {
 	PfpDirectory       string             `yaml:"PfpDirectory"`
 	GalleryDirectory   string             `yaml:"GalleryDirectory"`
 	CertsDirectory     string             `yaml:"CertsDirectory"`
-	SlackConfigs       SlackConfigs       `yaml:"SlackConfigs"`   // The configurations for the server's slack integration
 	LogConfigs         LoggingConfigs     `yaml:"LoggingConfigs"` // The configurations for the server's logging
-}
-
-// Configuration for slack integration
-type SlackConfigs struct {
-	Configured bool   `yaml:"Configured"` // If these configs have ever been generated; DO NOT EDIT THIS
-	UsingSlack bool   `yaml:"UsingSlack"` // If the server will be using slack for online status notifications and error handling
-	BotToken   string `yaml:"Token"`      // The slack bot token
-	Channel    string `yaml:"Channel"`    // The channel which the slack bot will send error messages and status notifications to
 }
 
 type LoggingConfigs struct {

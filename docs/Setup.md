@@ -27,11 +27,8 @@ setup.go uses a LOT of recursion. It can be confusing, but I believe in you.
 -   If you enter in an event key recognized by TBA, it will accept that and move on, writing the event schedule and team list for that event to files.
 -   If you enter a custom event key (begins with 'c'), it will accept that, but should pit scouting be enabled, require that you have a TeamLists file.
 14. It will ensure there is a valid google sheets spreadsheet ID. THis is found between **/d/** and **/edit** in a google sheets link. If the account the token was generated for has no access to this sheet or cannot read from it, it will treat it as invalid. 
-15. 
--   First, it will ask if the user would like to use slack or not. **It is highly recommended to use slack.**
--   If the user chose to use it, it will require a valid bot token and channel to a workspace it has access to and can write to. 
-16. It will automatically configure logging. The only way to set logging configs is through YAML.
-17. Finally, it will store these configurations in memory at constants.CachedConfigs and to the project at setup/greenscout.config.yaml
+15. It will automatically configure logging. The only way to set logging configs is through YAML.
+16. Finally, it will store these configurations in memory at constants.CachedConfigs and to the project at setup/greenscout.config.yaml
 
 Now you can run
 ```bash

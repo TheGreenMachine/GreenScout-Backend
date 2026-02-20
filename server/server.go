@@ -96,8 +96,6 @@ func iterativeServerCall() {
 							} else {
 								if !lib.MoveFile(filepath.Join(constants.JsonWrittenDirectory, foundFile), filepath.Join(constants.JsonErroredDirectory, foundFile)) {
 									greenlogger.FatalLogMessage("File " + filepath.Join(constants.JsonWrittenDirectory, foundFile) + " unable to be moved to Errored, investigate this!")
-								} else {
-									greenlogger.NotifyMessage("Errors in processing " + filepath.Join(constants.JsonWrittenDirectory, foundFile) + ", moved to " + filepath.Join(constants.JsonErroredDirectory, foundFile))
 								}
 							}
 						}
