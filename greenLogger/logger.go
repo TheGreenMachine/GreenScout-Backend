@@ -124,7 +124,7 @@ func GetLogger() *log.Logger {
 
 // Shuts down the log file by closing the reference to it and setting logFileAlive to false
 func ShutdownLogFile() {
-	ELogMessage("Shutting down log file due to configs...")
+	LogMessage("Shutting down log file due to configs...")
 	logFile.Close()
 	logFileAlive = false
 }

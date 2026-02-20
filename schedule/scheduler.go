@@ -52,7 +52,7 @@ func RetrieveSingleScouter(name string, isUUID bool) string {
 	}
 
 	if ranges == "" {
-		return `{"Ranges":null}`
+		return `{"Ranges":[]}`
 	} else {
 		return ranges
 	}
