@@ -1,15 +1,7 @@
 package main
 
 import (
-	"GreenScoutBackend/constants"
-	filemanager "GreenScoutBackend/fileManager"
-	greenlogger "GreenScoutBackend/greenLogger"
-	"GreenScoutBackend/lib"
-	"GreenScoutBackend/schedule"
-	"GreenScoutBackend/server"
-	"GreenScoutBackend/setup"
-	"GreenScoutBackend/sheet"
-	"GreenScoutBackend/userDB"
+	"GreenScoutBackend/internal"
 	"crypto/tls"
 	"net/http"
 	"os"
@@ -25,7 +17,7 @@ import (
 
 func main() {
 	// Initialize log file
-	greenlogger.InitLogFile()
+	internal.InitLogFile()
 
 	/// Setup
 	isSetup := slices.Contains(os.Args, "setup")
@@ -35,9 +27,9 @@ func main() {
 	httpPort := ":8080"
 	httpsPort := ":8443"
 
-	if filemanager.IsSudo() {
+	if internal.IsSudo() {
 		if isSetup {
-			greenlogger.FatalLogMessage("If you are running in setup mode, please run without sudo!")
+			internal.FatalLogMessage("If you are running in setup mode, please run without sudo!")
 		}
 		httpPort = ":80"
 		httpsPort = ":443"
@@ -46,33 +38,33 @@ func main() {
 	/// Running mode
 	if slices.Contains(os.Args, "prod") {
 		if slices.Contains(os.Args, "test") {
-			greenlogger.FatalLogMessage("Use only one of 'prod' or 'test'!!")
+			internal.FatalLogMessage("Use only one of 'prod' or 'test'!!")
 		}
 
 		publicHosting = true
-		serveTLS = constants.EnableHttps
+		serveTLS = internal.EnableHttps
 		updateDB = false
 	}
 
-	setup.TotalSetup(publicHosting)
+	internal.TotalSetup(publicHosting)
 
-	sheet.WriteConditionalFormatting()
+	internal.WriteConditionalFormatting()
 	if isSetup { // Exit if only in setup mode
 		os.Exit(1)
 	}
 
 	// Init DBs
-	schedule.InitScoutDB()
-	userDB.InitAuthDB()
-	userDB.InitUserDB()
+	internal.InitScoutDB()
+	internal.InitAuthDB()
+	internal.InitUserDB()
 
-	lib.StoreTeams()
+	internal.StoreTeams()
 
 	// Write all match numbers to the sheet with a 1 minute cooldown to avoid rate limiting
 	if slices.Contains(os.Args, "matches") {
 		var usingRemainder bool = false
 
-		matches := lib.GetNumMatches()
+		matches := internal.GetNumMatches()
 
 		blocks := matches / 50
 
@@ -82,7 +74,7 @@ func main() {
 		}
 
 		for i := 1; i <= blocks*50; i += 50 {
-			sheet.FillMatches(i, i+49)
+			internal.FillMatches(i, i+49)
 			time.Sleep(1 * time.Minute)
 		}
 
@@ -91,27 +83,27 @@ func main() {
 			if initial == 0 {
 				initial++
 			}
-			sheet.FillMatches(initial, initial+remainder)
+			internal.FillMatches(initial, initial+remainder)
 		}
 	}
 
 	// get server
-	jSrv := server.SetupServer()
+	jSrv := internal.SetupServer()
 
 	// ACME autocert with letsEncrypt
 	var serverManager *autocert.Manager
 	if publicHosting {
 		serverManager = &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(constants.CachedConfigs.DomainName),
-			Cache:      autocert.DirCache(constants.CachedConfigs.CertsDirectory), // This may not be the... wisest choice. Anyone in the future, feel free to fix.
+			HostPolicy: autocert.HostWhitelist(internal.CachedConfigs.DomainName),
+			Cache:      autocert.DirCache(internal.CachedConfigs.CertsDirectory), // This may not be the... wisest choice. Anyone in the future, feel free to fix.
 		}
 		jSrv.TLSConfig = &tls.Config{GetCertificate: serverManager.GetCertificate}
 
 		go func() {
 			// HTTP redirect to HTTPS server
 			h := serverManager.HTTPHandler(nil)
-			greenlogger.FatalError(http.ListenAndServe(httpPort, h), "http.ListenAndServe() failed")
+			internal.FatalError(http.ListenAndServe(httpPort, h), "http.ListenAndServe() failed")
 		}()
 
 	}
@@ -119,9 +111,9 @@ func main() {
 	if updateDB {
 		// Daily commit + push
 		cronManager := cron.New()
-		_, cronErr := cronManager.AddFunc("@midnight", userDB.CommitAndPushDBs)
+		_, cronErr := cronManager.AddFunc("@midnight", internal.CommitAndPushDBs)
 		if cronErr != nil {
-			greenlogger.FatalError(cronErr, "Problem assigning commit and push task to cron")
+			internal.FatalError(cronErr, "Problem assigning commit and push task to cron")
 		}
 		cronManager.Start()
 	}
@@ -132,32 +124,32 @@ func main() {
 			keyPath := ""
 			if !publicHosting {
 				// Local keys
-				crtPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "localhost.crt")
-				keyPath = filepath.Join(constants.CachedConfigs.RuntimeDirectory, "localhost.key")
+				crtPath = filepath.Join(internal.CachedConfigs.RuntimeDirectory, "localhost.crt")
+				keyPath = filepath.Join(internal.CachedConfigs.RuntimeDirectory, "localhost.key")
 			}
 
 			jSrv.Addr = httpsPort
 			err := jSrv.ListenAndServeTLS(crtPath, keyPath)
 			if err != nil {
-				greenlogger.FatalError(err, "jSrv.ListendAndServeTLS() failed")
+				internal.FatalError(err, "jSrv.ListendAndServeTLS() failed")
 			}
 
 		} else {
 			jSrv.Addr = httpPort
 			err := jSrv.ListenAndServe()
 			if err != nil {
-				greenlogger.FatalError(err, "jSrv.ListendAndServe() failed")
+				internal.FatalError(err, "jSrv.ListendAndServe() failed")
 			}
 		}
 	}()
 
 	if publicHosting {
-		setup.EnsureExternalConnectivity()
+		internal.EnsureExternalConnectivity()
 	}
 
-	greenlogger.LogMessage("Server Successfully Set Up! [ctrl+c to cancel]")
+	internal.LogMessage("Server Successfully Set Up! [ctrl+c to cancel]")
 
-	go server.RunServerLoop()
+	go internal.RunServerLoop()
 
 	/// Graceful shutdown
 
