@@ -1,9 +1,7 @@
 // Provides the endpoint for the frontend Router Dungeon Survivor photo gallery
-package gallery
+package internal
 
 import (
-	"GreenScoutBackend/constants"
-	greenlogger "GreenScoutBackend/greenLogger"
 	"os"
 	"path/filepath"
 )
@@ -14,14 +12,14 @@ import (
 // Returns the filepath to nth image from the gallery folder.
 // If one is not found, it will return an empty string, because I couldn't think of a good default image.
 func GetImage(index int) string {
-	allFiles, readErr := os.ReadDir(constants.CachedConfigs.GalleryDirectory)
+	allFiles, readErr := os.ReadDir(CachedConfigs.GalleryDirectory)
 	if readErr != nil {
-		greenlogger.LogError(readErr, "Unable to read gallery folder!")
+		LogError(readErr, "Unable to read gallery folder!")
 	}
 
 	for i, file := range allFiles {
 		if i == index {
-			return filepath.Join(constants.CachedConfigs.GalleryDirectory, file.Name())
+			return filepath.Join(CachedConfigs.GalleryDirectory, file.Name())
 		}
 	}
 	return ""

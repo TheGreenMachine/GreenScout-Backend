@@ -1,5 +1,5 @@
 // A wrapper around os.OpenFile() and os.Create() in order to allow files to be edited without restricting them to sudo-only.
-package filemanager
+package internal
 
 import (
 	"os"

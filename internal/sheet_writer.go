@@ -1,12 +1,8 @@
-package sheet
+package internal
 
 // Utilites for accessing the google sheets API
 
 import (
-	"GreenScoutBackend/constants"
-	filemanager "GreenScoutBackend/fileManager"
-	greenlogger "GreenScoutBackend/greenLogger"
-	"GreenScoutBackend/lib"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -28,7 +24,7 @@ func getClient(config *oauth2.Config) *http.Client {
 	// The file token.json stores the user's access and refresh tokens, and is
 	// created automatically when the authorization flow completes for the first
 	// time.
-	tokFile := constants.SheetsTokenFile
+	tokFile := SheetsTokenFile
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
 		client, _ := google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
@@ -45,17 +41,17 @@ func getClient(config *oauth2.Config) *http.Client {
 // Request a token from the web, then returns the retrieved token.
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	greenlogger.LogMessagef("Go to the following link in your browser then type the "+
+	LogMessagef("Go to the following link in your browser then type the "+
 		"authorization code: \n%v\n", authURL)
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
-		greenlogger.FatalError(err, "Unable to read authorization code: ")
+		FatalError(err, "Unable to read authorization code: ")
 	}
 
 	tok, err := config.Exchange(context.TODO(), authCode)
 	if err != nil {
-		greenlogger.FatalError(err, "Unable to retrieve token from web: ")
+		FatalError(err, "Unable to retrieve token from web: ")
 	}
 	return tok
 }
@@ -74,15 +70,15 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 
 // Saves a token to a file path.
 func saveToken(path string, token *oauth2.Token) {
-	greenlogger.LogMessagef("Saving credential file to: %s\n", path)
+	LogMessagef("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		greenlogger.FatalError(err, "Unable to cache oauth token: ")
+		FatalError(err, "Unable to cache oauth token: ")
 	}
 	defer f.Close()
 	encodeErr := json.NewEncoder(f).Encode(token)
 	if encodeErr != nil {
-		greenlogger.FatalError(encodeErr, "Unable to encode token to file")
+		FatalError(encodeErr, "Unable to encode token to file")
 	}
 }
 
@@ -98,55 +94,55 @@ func SetupSheetsAPI(creds []byte) {
 
 	config, err := google.ConfigFromJSON(creds, "https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
-		greenlogger.FatalError(err, "Unable to parse client secret file to config: %v")
+		FatalError(err, "Unable to parse client secret file to config: %v")
 	}
 	client := getClient(config)
 
 	Srv, err = sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		greenlogger.FatalError(err, "Unable to retrieve Sheets client: %v")
+		FatalError(err, "Unable to retrieve Sheets client: %v")
 	}
-	greenlogger.LogMessagef("Client retrieved for: %v", Srv.UserAgent)
+	LogMessagef("Client retrieved for: %v", Srv.UserAgent)
 
-	SpreadsheetId = constants.CachedConfigs.SpreadSheetID
+	SpreadsheetId = CachedConfigs.SpreadSheetID
 }
 
 // Writes team data from multi-scouting to a specified line
-func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources []lib.TeamData) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(matchdata.CycleData.AllCycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(matchdata.CycleData.AllCycles)
+func WriteMultiScoutedTeamDataToLine(matchdata MultiMatch, row int, sources []TeamData) bool {
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(matchdata.CycleData.AllCycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(matchdata.CycleData.AllCycles)
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		lib.GetDSString(matchdata.DriverStation.IsBlue, uint(matchdata.DriverStation.Number)),
+		GetDSString(matchdata.DriverStation.IsBlue, uint(matchdata.DriverStation.Number)),
 		matchdata.Match,
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,
-		math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
-		troughAccuracy,                            // L1/Trough accuracy
-		math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
-		L2Accuracy,                                // L2 Coral accuracy
-		math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
-		L3Accuracy,                                // L3 Coral accuracy
-		math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
-		L4Accuracy,                                // L4 Coral accuracy
-		math.Round(processorTendency*10000) / 100, // Processor tendency
-		processorAccuracy,                         // Processor accuracy
-		math.Round(netTendency*10000) / 100,       // Net tendency
-		netAccuracy,                               // Bet accuracy
-		math.Round(knockTendency*10000) / 100,     // Knock tendency
-		knockAccuracy,                             // Knock accuracy
-		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
-		shuttleAccuracy,                           // Shuttle accuracy
-		lib.GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns. -Leon
-		matchdata.Auto.Can,                        // Had Auto
-		matchdata.Auto.Scores,                     // Scores in auto
-		lib.GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
-		matchdata.Auto.Ejects,                     // Auto shuttles
+		math.Round(troughTendency*10000) / 100,       // L1/Trough tendency
+		troughAccuracy,                               // L1/Trough accuracy
+		math.Round(L2Tendency*10000) / 100,           // L2 Coral tendency
+		L2Accuracy,                                   // L2 Coral accuracy
+		math.Round(L3Tendency*10000) / 100,           // L3 Coral tendency
+		L3Accuracy,                                   // L3 Coral accuracy
+		math.Round(L4Tendency*10000) / 100,           // L4 Coral tendency
+		L4Accuracy,                                   // L4 Coral accuracy
+		math.Round(processorTendency*10000) / 100,    // Processor tendency
+		processorAccuracy,                            // Processor accuracy
+		math.Round(netTendency*10000) / 100,          // Net tendency
+		netAccuracy,                                  // Bet accuracy
+		math.Round(knockTendency*10000) / 100,        // Knock tendency
+		knockAccuracy,                                // Knock accuracy
+		math.Round(shuttleTendency*10000) / 100,      // Shuttle tendency
+		shuttleAccuracy,                              // Shuttle accuracy
+		GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns. -Leon
+		matchdata.Auto.Can,                           // Had Auto
+		matchdata.Auto.Scores,                        // Scores in auto
+		GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
+		matchdata.Auto.Ejects,                        // Auto shuttles
 		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon -Leon
-		matchdata.Parked,                      // Parked
-		lib.CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
+		matchdata.Parked,                         // Parked
+		CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -158,47 +154,47 @@ func WriteMultiScoutedTeamDataToLine(matchdata lib.MultiMatch, row int, sources 
 	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
 
 	if err != nil {
-		greenlogger.LogError(err, "Unable to write data to sheet")
+		LogError(err, "Unable to write data to sheet")
 		return false
 	}
 	return true
 }
 
 // Writes data from a single-scouted match to a line
-func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
+func WriteTeamDataToLine(teamData TeamData, row int) bool {
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(teamData.Cycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		lib.GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.Match.Number,                     // Match Number
-		teamData.TeamNumber,                       // Team Number
-		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
-		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
-		math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
-		troughAccuracy,                            // L1/Trough accuracy
-		math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
-		L2Accuracy,                                // L2 Coral accuracy
-		math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
-		L3Accuracy,                                // L3 Coral accuracy
-		math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
-		L4Accuracy,                                // L4 Coral accuracy
-		math.Round(processorTendency*10000) / 100, // Processor tendency
-		processorAccuracy,                         // Processor accuracy
-		math.Round(knockTendency*10000) / 100,     // Knock tendency
-		knockAccuracy,                             // Knock accuracy
-		math.Round(netTendency*10000) / 100,       // Net tendency
-		netAccuracy,                               // Net accuracy
-		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
-		shuttleAccuracy,                           // Shuttle accuracy
-		lib.GetPickupLocations(teamData.Pickups),  // Pickup positions
-		teamData.Auto.Can,                         // Had Auto
-		teamData.Auto.Scores,                      // Scores in auto
-		lib.GetAutoAccuracy(teamData.Auto),        // Auto accuracy
-		teamData.Auto.Ejects,                      // Auto shuttles
-		teamData.Endgame.Time,                     // Climb Time
-		lib.GetParkStatus(teamData.Endgame),       // Parked
-		lib.CompileNotes(teamData),                // Notes + Penalties + DC + Lost track
+		GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
+		teamData.Match.Number,                       // Match Number
+		teamData.TeamNumber,                         // Team Number
+		GetAvgCycleTime(teamData.Cycles),     // Avg cycle time
+		GetNumCycles(teamData.Cycles),        // Num Cycles
+		math.Round(troughTendency*10000) / 100,      // L1/Trough tendency
+		troughAccuracy,                              // L1/Trough accuracy
+		math.Round(L2Tendency*10000) / 100,          // L2 Coral tendency
+		L2Accuracy,                                  // L2 Coral accuracy
+		math.Round(L3Tendency*10000) / 100,          // L3 Coral tendency
+		L3Accuracy,                                  // L3 Coral accuracy
+		math.Round(L4Tendency*10000) / 100,          // L4 Coral tendency
+		L4Accuracy,                                  // L4 Coral accuracy
+		math.Round(processorTendency*10000) / 100,   // Processor tendency
+		processorAccuracy,                           // Processor accuracy
+		math.Round(knockTendency*10000) / 100,       // Knock tendency
+		knockAccuracy,                               // Knock accuracy
+		math.Round(netTendency*10000) / 100,         // Net tendency
+		netAccuracy,                                 // Net accuracy
+		math.Round(shuttleTendency*10000) / 100,     // Shuttle tendency
+		shuttleAccuracy,                             // Shuttle accuracy
+		GetPickupLocations(teamData.Pickups), // Pickup positions
+		teamData.Auto.Can,                           // Had Auto
+		teamData.Auto.Scores,                        // Scores in auto
+		GetAutoAccuracy(teamData.Auto),       // Auto accuracy
+		teamData.Auto.Ejects,                        // Auto shuttles
+		teamData.Endgame.Time,                       // Climb Time
+		GetParkStatus(teamData.Endgame),      // Parked
+		CompileNotes(teamData),               // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -210,7 +206,7 @@ func WriteTeamDataToLine(teamData lib.TeamData, row int) bool {
 	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
 
 	if err != nil {
-		greenlogger.LogError(err, "Unable to write data to sheet")
+		LogError(err, "Unable to write data to sheet")
 		return false
 	}
 
@@ -232,7 +228,7 @@ func BatchUpdate(dataset [][]interface{}, writeRange string) {
 	_, err := Srv.Spreadsheets.Values.BatchUpdate(SpreadsheetId, rb).Do()
 
 	if err != nil {
-		greenlogger.LogError(err, "Unable to write data to sheet")
+		LogError(err, "Unable to write data to sheet")
 	}
 }
 
@@ -252,27 +248,27 @@ func FillMatches(startMatch int, endMatch int) {
 			matchTracker += 6
 		}
 	} else {
-		greenlogger.LogMessage("Input matches with a delta under 50!")
+		LogMessage("Input matches with a delta under 50!")
 	}
 }
 
 // Updates the ID of the sheet to be used, in memory and yaml.
 func UpdateSheetID(newSheet string) string {
 	if IsSheetValid(newSheet) {
-		constants.CachedConfigs.SpreadSheetID = newSheet
+		CachedConfigs.SpreadSheetID = newSheet
 
-		configFile, openErr := filemanager.OpenWithPermissions(constants.ConfigFilePath)
+		configFile, openErr := OpenWithPermissions(ConfigFilePath)
 		if openErr != nil {
-			greenlogger.LogErrorf(openErr, "Problem opening %v", constants.ConfigFilePath)
+			LogErrorf(openErr, "Problem opening %v", ConfigFilePath)
 			return "There was a problem updating the sheet ID"
 		}
 
 		defer configFile.Close()
 
-		encodeErr := yaml.NewEncoder(configFile).Encode(&constants.CachedConfigs)
+		encodeErr := yaml.NewEncoder(configFile).Encode(&CachedConfigs)
 
 		if encodeErr != nil {
-			greenlogger.LogErrorf(encodeErr, "Problem encoding %v", constants.CachedConfigs)
+			LogErrorf(encodeErr, "Problem encoding %v", CachedConfigs)
 			return "There was a problem updating the sheet ID"
 		}
 
@@ -295,7 +291,7 @@ func IsSheetValid(id string) bool {
 func WriteConditionalFormatting() {
 	tabs, err := Srv.Spreadsheets.Get(SpreadsheetId).Do()
 	if err != nil {
-		greenlogger.LogError(err, "Failed to get tabs")
+		LogError(err, "Failed to get tabs")
 		return
 	}
 
@@ -378,12 +374,12 @@ func WriteConditionalFormatting() {
 	).Do()
 
 	if sheetErr != nil {
-		greenlogger.LogError(sheetErr, "Problem adding conditionall formatting.")
+		LogError(sheetErr, "Problem adding conditionall formatting.")
 	}
 }
 
 // Writes data from pit scouting to a line
-func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
+func WritePitDataToLine(pitData PitScoutingData, row int) bool {
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
@@ -419,7 +415,7 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 	_, err := Srv.Spreadsheets.Values.Append(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").InsertDataOption("INSERT_ROWS").Do()
 
 	if err != nil {
-		greenlogger.LogError(err, "Unable to write data to sheet")
+		LogError(err, "Unable to write data to sheet")
 		return false
 	}
 
@@ -428,39 +424,39 @@ func WritePitDataToLine(pitData lib.PitScoutingData, row int) bool {
 }
 
 // Writes data from a prescouted match to a line
-func WritePrescoutDataToLine(teamData lib.TeamData, row int) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := lib.GetCycleTendencies(teamData.Cycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := lib.GetCycleAccuracies(teamData.Cycles)
+func WritePrescoutDataToLine(teamData TeamData, row int) bool {
+	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(teamData.Cycles)
+	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		lib.GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.TeamNumber,                       // Team Number
-		lib.GetAvgCycleTime(teamData.Cycles),      // Avg cycle time
-		lib.GetNumCycles(teamData.Cycles),         // Num Cycles
-		math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
-		troughAccuracy,                            // L1/Trough accuracy
-		math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
-		L2Accuracy,                                // L2 Coral accuracy
-		math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
-		L3Accuracy,                                // L3 Coral accuracy
-		math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
-		L4Accuracy,                                // L4 Coral accuracy
-		math.Round(processorTendency*10000) / 100, // Processor tendency
-		processorAccuracy,                         // Processor accuracy
-		math.Round(knockTendency*10000) / 100,     // Knock tendency
-		knockAccuracy,                             // Knock accuracy
-		math.Round(netTendency*10000) / 100,       // Net tendency
-		netAccuracy,                               // Net accuracy
-		math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
-		shuttleAccuracy,                           // Shuttle accuracy
-		lib.GetPickupLocations(teamData.Pickups),  // Pickup positions
-		teamData.Auto.Can,                         // Had Auto
-		teamData.Auto.Scores,                      // Scores in auto
-		lib.GetAutoAccuracy(teamData.Auto),        // Auto accuracy
-		teamData.Auto.Ejects,                      // Auto shuttles
-		teamData.Endgame.Time,                     // Climb Time
-		lib.GetParkStatus(teamData.Endgame),       // Parked
-		lib.CompileNotes(teamData),                // Notes + Penalties + DC + Lost track
+		GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
+		teamData.TeamNumber,                         // Team Number
+		GetAvgCycleTime(teamData.Cycles),     // Avg cycle time
+		GetNumCycles(teamData.Cycles),        // Num Cycles
+		math.Round(troughTendency*10000) / 100,      // L1/Trough tendency
+		troughAccuracy,                              // L1/Trough accuracy
+		math.Round(L2Tendency*10000) / 100,          // L2 Coral tendency
+		L2Accuracy,                                  // L2 Coral accuracy
+		math.Round(L3Tendency*10000) / 100,          // L3 Coral tendency
+		L3Accuracy,                                  // L3 Coral accuracy
+		math.Round(L4Tendency*10000) / 100,          // L4 Coral tendency
+		L4Accuracy,                                  // L4 Coral accuracy
+		math.Round(processorTendency*10000) / 100,   // Processor tendency
+		processorAccuracy,                           // Processor accuracy
+		math.Round(knockTendency*10000) / 100,       // Knock tendency
+		knockAccuracy,                               // Knock accuracy
+		math.Round(netTendency*10000) / 100,         // Net tendency
+		netAccuracy,                                 // Net accuracy
+		math.Round(shuttleTendency*10000) / 100,     // Shuttle tendency
+		shuttleAccuracy,                             // Shuttle accuracy
+		GetPickupLocations(teamData.Pickups), // Pickup positions
+		teamData.Auto.Can,                           // Had Auto
+		teamData.Auto.Scores,                        // Scores in auto
+		GetAutoAccuracy(teamData.Auto),       // Auto accuracy
+		teamData.Auto.Ejects,                        // Auto shuttles
+		teamData.Endgame.Time,                       // Climb Time
+		GetParkStatus(teamData.Endgame),      // Parked
+		CompileNotes(teamData),               // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -472,7 +468,7 @@ func WritePrescoutDataToLine(teamData lib.TeamData, row int) bool {
 	_, err := Srv.Spreadsheets.Values.Update(SpreadsheetId, writeRange, &vr).ValueInputOption("RAW").Do()
 
 	if err != nil {
-		greenlogger.LogError(err, "Unable to write data to sheet")
+		LogError(err, "Unable to write data to sheet")
 		return false
 	}
 

@@ -1,9 +1,8 @@
-package userDB
+package internal
 
 // Utilities for handling accolades/achievments/badges
 
 import (
-	greenlogger "GreenScoutBackend/greenLogger"
 	"encoding/json"
 	"slices"
 )
@@ -112,12 +111,12 @@ func GetAccolades(uuid string) []AccoladeData {
 	response := userDB.QueryRow("select accolades from users where uuid = ?", uuid)
 	scanErr := response.Scan(&AccoladesMarshalled)
 	if scanErr != nil {
-		greenlogger.LogError(scanErr, "Problem scanning results of sql query SELECT accolades FROM users WHERE uuid = ? with arg: "+uuid)
+		LogError(scanErr, "Problem scanning results of sql query SELECT accolades FROM users WHERE uuid = ? with arg: "+uuid)
 	}
 	// I am aware of how awful converting []byte -> string -> []byte is but i've had problems storing byte arrays with sqlite.
 	unmarshalErr := json.Unmarshal([]byte(AccoladesMarshalled), &Accolades)
 	if unmarshalErr != nil {
-		greenlogger.LogErrorf(unmarshalErr, "Problem unmarshalling %v", AccoladesMarshalled)
+		LogErrorf(unmarshalErr, "Problem unmarshalling %v", AccoladesMarshalled)
 	}
 
 	return Accolades

@@ -1,7 +1,6 @@
-package lib
+package internal
 
 import (
-	greenlogger "GreenScoutBackend/greenLogger"
 	"fmt"
 	"math"
 
@@ -194,17 +193,17 @@ func compileAutoData(entries []TeamData) AutoData {
 
 	scoresAvgd, scoresMeanErr := stats.Mean(allScores)
 	if scoresMeanErr != nil {
-		greenlogger.LogErrorf(scoresMeanErr, "Error finding mean of %v for all scores", allScores)
+		LogErrorf(scoresMeanErr, "Error finding mean of %v for all scores", allScores)
 	}
 
 	missesAvgd, missesMeanErr := stats.Mean(allMisses)
 	if missesMeanErr != nil {
-		greenlogger.LogErrorf(missesMeanErr, "Error finding mean of %v for all misses", allMisses)
+		LogErrorf(missesMeanErr, "Error finding mean of %v for all misses", allMisses)
 	}
 
 	ejectsAvgd, ejectsMeanErr := stats.Mean(allEjects)
 	if ejectsMeanErr != nil {
-		greenlogger.LogErrorf(ejectsMeanErr, "Error finding mean of %v for all ejects", allEjects)
+		LogErrorf(ejectsMeanErr, "Error finding mean of %v for all ejects", allEjects)
 	}
 
 	return AutoData{

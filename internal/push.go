@@ -1,10 +1,8 @@
-package userDB
+package internal
 
 // Utility for the nighly push to github of the databases
 
 import (
-	"GreenScoutBackend/constants"
-	greenlogger "GreenScoutBackend/greenLogger"
 	"os/exec"
 	"strings"
 )
@@ -15,20 +13,20 @@ func CommitAndPushDBs() {
 	pushCommand := exec.Command("git", "push")
 
 	// Switch dir to the db path
-	commitCommand.Dir = "./" + constants.CachedConfigs.PathToDatabases
-	pushCommand.Dir = "./" + constants.CachedConfigs.PathToDatabases
+	commitCommand.Dir = "./" + CachedConfigs.PathToDatabases
+	pushCommand.Dir = "./" + CachedConfigs.PathToDatabases
 
 	commit, commitErr := commitCommand.Output()
-	greenlogger.LogMessage("Response to committing daily DB sync: " + string(commit))
+	LogMessage("Response to committing daily DB sync: " + string(commit))
 
 	if commitErr != nil && !strings.Contains(commitErr.Error(), "exit status 1") {
-		greenlogger.LogErrorf(commitErr, "Error Committing daily databases sync")
+		LogErrorf(commitErr, "Error Committing daily databases sync")
 	} else {
 		push, pushErr := pushCommand.Output()
-		greenlogger.LogMessage("Response to pushing daily DB sync: " + string(push))
+		LogMessage("Response to pushing daily DB sync: " + string(push))
 
 		if pushErr != nil && !strings.Contains(pushErr.Error(), "exit status 1") {
-			greenlogger.LogErrorf(pushErr, "Error pushing daily databases sync")
+			LogErrorf(pushErr, "Error pushing daily databases sync")
 		}
 	}
 

@@ -1,11 +1,8 @@
-package userDB
+package internal
 
 // Utilities for handling auth.db
 
 import (
-	"GreenScoutBackend/constants"
-	greenlogger "GreenScoutBackend/greenLogger"
-	"GreenScoutBackend/rsaUtil"
 	"database/sql"
 	"path/filepath"
 
@@ -18,12 +15,12 @@ var authDB *sql.DB
 
 // Initializes auth.db and stores it to memory
 func InitAuthDB() {
-	dbRef, dbOpenErr := sql.Open(constants.CachedConfigs.SqliteDriver, filepath.Join(constants.CachedConfigs.PathToDatabases, "auth.db"))
+	dbRef, dbOpenErr := sql.Open(CachedConfigs.SqliteDriver, filepath.Join(CachedConfigs.PathToDatabases, "auth.db"))
 
 	authDB = dbRef
 
 	if dbOpenErr != nil {
-		greenlogger.FatalError(dbOpenErr, "Problem opening database "+filepath.Join(constants.CachedConfigs.PathToDatabases, "auth.db"))
+		FatalError(dbOpenErr, "Problem opening database "+filepath.Join(CachedConfigs.PathToDatabases, "auth.db"))
 	}
 }
 
@@ -35,14 +32,14 @@ type LoginAttempt struct {
 
 // Authenticates the password through the database, returning the role it turned out to be and if it authenticated.
 func Authenticate(passwordEncoded []byte) (string, bool) {
-	passwordPlain := rsaUtil.DecryptPassword(passwordEncoded) // Decrypt password with private key
+	passwordPlain := DecryptPassword(passwordEncoded) // Decrypt password with private key
 
 	checkAgainst := make(map[string]string) // Make a new map {string:string}
 
 	rows, queryErr := authDB.Query("select role, password from role")
 
 	if queryErr != nil {
-		greenlogger.LogError(queryErr, "Problem in sql query SELECT role, password FROM role")
+		LogError(queryErr, "Problem in sql query SELECT role, password FROM role")
 	}
 
 	for rows.Next() {
@@ -51,7 +48,7 @@ func Authenticate(passwordEncoded []byte) (string, bool) {
 		scanErr := rows.Scan(&role, &hashedWord)
 
 		if scanErr != nil {
-			greenlogger.LogError(scanErr, "Problem scanning response to sql query SELECT role, password FROM role")
+			LogError(scanErr, "Problem scanning response to sql query SELECT role, password FROM role")
 		}
 
 		checkAgainst[role] = hashedWord

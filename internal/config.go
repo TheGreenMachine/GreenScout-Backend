@@ -1,5 +1,5 @@
 // Holds data in memory that is accessable project-wide.
-package constants
+package internal
 
 import (
 	"path/filepath"
@@ -79,6 +79,6 @@ type LoggingConfigs struct {
 
 type CustomEventConfigs struct {
 	Configured     bool `yaml:"Configured"`     // If these configs have ever been generated; DO NOT EDIT THIS
-	CustomSchedule bool `yaml:"CustomSchedule"` // If there is a custom schedule.json file to be used with the custom event key
+	CustomSchedule bool `yaml:"CustomSchedule"` // If there is a custom json file to be used with the custom event key
 	PitScouting    bool `yaml:"PitScouting"`    // If there will be pit scouting at this event. If true, this will require an accociated file in TeamLists
 }

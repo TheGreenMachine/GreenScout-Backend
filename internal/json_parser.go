@@ -1,10 +1,8 @@
-package lib
+package internal
 
 // Utility for parsing and processing match JSON
 
 import (
-	"GreenScoutBackend/constants"
-	greenlogger "GreenScoutBackend/greenLogger"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -83,9 +81,9 @@ func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
 
 	var path string
 	if hasBeenWritten {
-		path = filepath.Join(constants.JsonWrittenDirectory, file)
+		path = filepath.Join(JsonWrittenDirectory, file)
 	} else {
-		path = filepath.Join(constants.JsonInDirectory, file)
+		path = filepath.Join(JsonInDirectory, file)
 	}
 
 	// Open file
@@ -93,7 +91,7 @@ func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
 
 	// Handle any error opening the file
 	if fileErr != nil {
-		greenlogger.LogErrorf(fileErr, "Error opening JSON file %v", path)
+		LogErrorf(fileErr, "Error opening JSON file %v", path)
 		return TeamData{}, true
 	}
 
@@ -105,7 +103,7 @@ func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
 	dataAsByte, readErr := io.ReadAll(jsonFile)
 
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Error reading JSON file %v", path)
+		LogErrorf(readErr, "Error reading JSON file %v", path)
 		return TeamData{}, true
 	}
 
@@ -114,7 +112,7 @@ func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
 
 	//Deal with unmarshalling errors
 	if err != nil {
-		greenlogger.LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
+		LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
 		return TeamData{}, true
 	}
 
@@ -135,10 +133,10 @@ func GetNameFromWritten(match MatchInfoRequest) string {
 
 	filePattern := fmt.Sprintf("%s_%v_%s", GetCurrentEvent(), match.Match, GetDSString(match.IsBlue, uint(match.DriverStation)))
 
-	written, err := os.ReadDir(constants.JsonWrittenDirectory)
+	written, err := os.ReadDir(JsonWrittenDirectory)
 
 	if err != nil {
-		greenlogger.LogErrorf(err, "Error searching %v", constants.JsonWrittenDirectory)
+		LogErrorf(err, "Error searching %v", JsonWrittenDirectory)
 		return "Err in searching!"
 	}
 
@@ -151,12 +149,12 @@ func GetNameFromWritten(match MatchInfoRequest) string {
 		if len(splitByUnder) > 3 && filePattern == strings.Join(splitByUnder[:3], "_") {
 
 			// Open file
-			outFilePath := filepath.Join(constants.JsonWrittenDirectory, file.Name())
+			outFilePath := filepath.Join(JsonWrittenDirectory, file.Name())
 			jsonFile, fileErr := os.Open(outFilePath)
 
 			// Handle any error opening the file
 			if fileErr != nil {
-				greenlogger.LogErrorf(fileErr, "Error opening JSON file %v", outFilePath)
+				LogErrorf(fileErr, "Error opening JSON file %v", outFilePath)
 			}
 
 			// defer file closing
@@ -167,7 +165,7 @@ func GetNameFromWritten(match MatchInfoRequest) string {
 			dataAsByte, readErr := io.ReadAll(jsonFile)
 
 			if readErr != nil {
-				greenlogger.LogErrorf(readErr, outFilePath)
+				LogErrorf(readErr, outFilePath)
 			}
 
 			//Deocding
@@ -175,7 +173,7 @@ func GetNameFromWritten(match MatchInfoRequest) string {
 
 			//Deal with unmarshalling errors
 			if err != nil {
-				greenlogger.LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
+				LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
 			}
 
 			if teamData.Scouter != "" {
@@ -246,14 +244,14 @@ type AlgaeData struct {
 // Parses through the file at the passed in location, returning a compiled PitScoutingData object and wether or not there were errors.
 func ParsePitScout(file string) (PitScoutingData, bool) {
 
-	path := filepath.Join(constants.JsonInDirectory, file)
+	path := filepath.Join(JsonInDirectory, file)
 
 	// Open file
 	jsonFile, fileErr := os.Open(path)
 
 	// Handle any error opening the file
 	if fileErr != nil {
-		greenlogger.LogErrorf(fileErr, "Error opening JSON file %v", path)
+		LogErrorf(fileErr, "Error opening JSON file %v", path)
 		return PitScoutingData{}, true
 	}
 
@@ -265,7 +263,7 @@ func ParsePitScout(file string) (PitScoutingData, bool) {
 	dataAsByte, readErr := io.ReadAll(jsonFile)
 
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Error reading JSON file %v", path)
+		LogErrorf(readErr, "Error reading JSON file %v", path)
 		return PitScoutingData{}, true
 	}
 
@@ -273,7 +271,7 @@ func ParsePitScout(file string) (PitScoutingData, bool) {
 	err := json.Unmarshal(dataAsByte, &pitData)
 	//Deal with unmarshalling errors
 	if err != nil {
-		greenlogger.LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
+		LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
 		return PitScoutingData{}, true
 	}
 

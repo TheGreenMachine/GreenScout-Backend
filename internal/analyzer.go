@@ -1,9 +1,8 @@
-package lib
+package internal
 
 // Utility for analyzing differences in cycle times
 
 import (
-	greenlogger "GreenScoutBackend/greenLogger"
 	"math"
 
 	"github.com/montanaflynn/stats"
@@ -31,12 +30,12 @@ func isNearSeconds(averages []float64, allowableErr float64) bool {
 
 	max, maxErr := stats.Max(averages)
 	if maxErr != nil {
-		greenlogger.LogErrorf(maxErr, "Error finding maximum of %v", averages)
+		LogErrorf(maxErr, "Error finding maximum of %v", averages)
 		return false
 	}
 	min, minErr := stats.Min(averages)
 	if minErr != nil {
-		greenlogger.LogErrorf(minErr, "Error finding minimum of %v", averages)
+		LogErrorf(minErr, "Error finding minimum of %v", averages)
 		return false
 	}
 

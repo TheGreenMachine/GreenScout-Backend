@@ -1,9 +1,8 @@
-package userDB
+package internal
 
 // Utilities for interacting with leaderboards
 
 import (
-	greenlogger "GreenScoutBackend/greenLogger"
 	"database/sql"
 	"errors"
 )
@@ -35,7 +34,7 @@ func ModifyUserScore(name string, alter Modification, by int) {
 		scanErr := scoreRow.Scan(&lifeScore)
 
 		if scanErr != nil {
-			greenlogger.LogErrorf(scanErr, "Problem scanning results of sql query UPDATE users SET score = score + %v, lifescore = lifescore + %v WHERE uuid = %v RETURNING score with args: ", by, by, uuid)
+			LogErrorf(scanErr, "Problem scanning results of sql query UPDATE users SET score = score + %v, lifescore = lifescore + %v WHERE uuid = %v RETURNING score with args: ", by, by, uuid)
 		}
 
 		accolades := GetAccolades(uuid)
@@ -64,12 +63,12 @@ func ModifyUserScore(name string, alter Modification, by int) {
 	case Decrease:
 		_, err := userDB.Exec("update users set score = score - ?, lifescore = lifescore - ? where uuid = ?", by, by, uuid)
 		if err != nil {
-			greenlogger.LogErrorf(err, "Problem executing sql query UPDATE users SET score = score - ?, lifescore = lifescore - ? WHERE uuid = ? with args: %v, %v, %v", by, by, uuid)
+			LogErrorf(err, "Problem executing sql query UPDATE users SET score = score - ?, lifescore = lifescore - ? WHERE uuid = ? with args: %v, %v, %v", by, by, uuid)
 		}
 	case Set: //Set will not affect life scores. Sorry!
 		_, err := userDB.Exec("update users set score = ? where uuid = ?", by, uuid)
 		if err != nil {
-			greenlogger.LogErrorf(err, "Problem executing sql query UPDATE users SET score = ? WHERE uuid = ? with args: %v, %v", by, uuid)
+			LogErrorf(err, "Problem executing sql query UPDATE users SET score = ? WHERE uuid = ? with args: %v, %v", by, uuid)
 		}
 	}
 	checkAndUpdateHighScore(uuid)
@@ -85,14 +84,14 @@ func checkAndUpdateHighScore(uuid string) {
 
 	scanErr := result.Scan(&larger, &score)
 	if scanErr != nil && !errors.Is(scanErr, sql.ErrNoRows) {
-		greenlogger.LogErrorf(scanErr, "Problem scanning response %v", result)
+		LogErrorf(scanErr, "Problem scanning response %v", result)
 	}
 
 	if larger {
 
 		_, execErr := userDB.Exec("update users set highscore = score where uuid = ?", uuid)
 		if execErr != nil {
-			greenlogger.LogErrorf(execErr, "Problem executing sql query UPDATE users SET highscore = score WHERE uuid = ? with arg: %v", uuid)
+			LogErrorf(execErr, "Problem executing sql query UPDATE users SET highscore = score WHERE uuid = ? with arg: %v", uuid)
 		}
 
 		accolades := GetAccolades(uuid)
@@ -120,7 +119,7 @@ func GetLeaderboard(scoreType string) []UserInfo {
 	resultRows, queryErr := userDB.Query("select uuid, username, displayname, score, lifescore, highscore, color from users order by " + scoreType + " desc")
 
 	if queryErr != nil {
-		greenlogger.LogErrorf(queryErr, "Problem executing sql query SELECT uuid, username, displayname, score, lifescore, highscore, color FROM users ORDER BY %v DESC", scoreType)
+		LogErrorf(queryErr, "Problem executing sql query SELECT uuid, username, displayname, score, lifescore, highscore, color FROM users ORDER BY %v DESC", scoreType)
 	}
 
 	for resultRows.Next() {
@@ -135,7 +134,7 @@ func GetLeaderboard(scoreType string) []UserInfo {
 		scanErr := resultRows.Scan(&uuid, &username, &displayName, &score, &lifeScore, &highScore, &color)
 
 		if scanErr != nil {
-			greenlogger.LogErrorf(scanErr, "Problem scanning response to sql query SELECT uuid, username, displayname, score, lifescore, highscore, color FROM users ORDER BY %v DESC", scoreType)
+			LogErrorf(scanErr, "Problem scanning response to sql query SELECT uuid, username, displayname, score, lifescore, highscore, color FROM users ORDER BY %v DESC", scoreType)
 		}
 
 		leaderboard = append(leaderboard, UserInfo{
@@ -156,6 +155,6 @@ func GetLeaderboard(scoreType string) []UserInfo {
 func ResetScores() {
 	_, execErr := userDB.Exec("update users set score = 0") //No need to move anything around, as lifetime and high score are updated when score is added/set any other way
 	if execErr != nil {
-		greenlogger.LogErrorf(execErr, "Problem executing sql query UPDATE users SET score = 0")
+		LogErrorf(execErr, "Problem executing sql query UPDATE users SET score = 0")
 	}
 }

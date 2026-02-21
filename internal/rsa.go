@@ -1,10 +1,8 @@
-package rsaUtil
+package internal
 
 // Utility to handle RSA encryption/decription
 
 import (
-	"GreenScoutBackend/constants"
-	greenlogger "GreenScoutBackend/greenLogger"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -15,16 +13,16 @@ import (
 
 // Returns the contents of the public key used for password encryption
 func GetPublicKey() string {
-	pubFile, openErr := os.Open(constants.RSAPubKeyPath)
+	pubFile, openErr := os.Open(RSAPubKeyPath)
 	if openErr != nil {
-		greenlogger.LogErrorf(openErr, "Problem opening %v", constants.RSAPubKeyPath)
+		LogErrorf(openErr, "Problem opening %v", RSAPubKeyPath)
 		return ""
 	}
 	defer pubFile.Close()
 
 	keyBytes, readErr := io.ReadAll(pubFile)
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Problem reading %v", constants.RSAPubKeyPath)
+		LogErrorf(readErr, "Problem reading %v", RSAPubKeyPath)
 		return ""
 	}
 
@@ -37,9 +35,9 @@ func DecryptPassword(passwordEncrypted []byte) string {
 		return ""
 	}
 
-	privFile, openErr := os.Open(constants.RSAPrivateKeyPath)
+	privFile, openErr := os.Open(RSAPrivateKeyPath)
 	if openErr != nil {
-		greenlogger.LogErrorf(openErr, "Problem opening %v", constants.RSAPrivateKeyPath)
+		LogErrorf(openErr, "Problem opening %v", RSAPrivateKeyPath)
 		return ""
 	}
 
@@ -47,7 +45,7 @@ func DecryptPassword(passwordEncrypted []byte) string {
 
 	keyBytes, readErr := io.ReadAll(privFile)
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Problem reading %v", constants.RSAPrivateKeyPath)
+		LogErrorf(readErr, "Problem reading %v", RSAPrivateKeyPath)
 		return ""
 	}
 
@@ -55,13 +53,13 @@ func DecryptPassword(passwordEncrypted []byte) string {
 
 	key, parseErr := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if parseErr != nil {
-		greenlogger.LogErrorf(parseErr, "Problem parsing %v", block.Bytes)
+		LogErrorf(parseErr, "Problem parsing %v", block.Bytes)
 		return ""
 	}
 
 	decrypted, decryptErr := rsa.DecryptPKCS1v15(rand.Reader, key, passwordEncrypted)
 	if decryptErr != nil {
-		greenlogger.LogErrorf(decryptErr, "Problem decrypting %v", passwordEncrypted)
+		LogErrorf(decryptErr, "Problem decrypting %v", passwordEncrypted)
 		return ""
 	}
 
@@ -70,12 +68,12 @@ func DecryptPassword(passwordEncrypted []byte) string {
 
 // Encodes a message with the public key
 func EncodeWithPublicKey(message string) []byte {
-	pubFile, _ := os.Open(constants.RSAPubKeyPath)
+	pubFile, _ := os.Open(RSAPubKeyPath)
 	defer pubFile.Close()
 
 	keyBytes, readErr := io.ReadAll(pubFile)
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Problem reading %v", constants.RSAPubKeyPath)
+		LogErrorf(readErr, "Problem reading %v", RSAPubKeyPath)
 		return []byte("")
 	}
 
@@ -84,13 +82,13 @@ func EncodeWithPublicKey(message string) []byte {
 	key, parseErr := x509.ParsePKCS1PublicKey(block.Bytes)
 
 	if parseErr != nil {
-		greenlogger.LogErrorf(parseErr, "Problem parsing %v", block.Bytes)
+		LogErrorf(parseErr, "Problem parsing %v", block.Bytes)
 		return []byte("")
 	}
 
 	result, encryptErr := rsa.EncryptPKCS1v15(rand.Reader, key, []byte(message))
 	if encryptErr != nil {
-		greenlogger.LogErrorf(encryptErr, "Problem encrypting %v", message)
+		LogErrorf(encryptErr, "Problem encrypting %v", message)
 		return []byte("")
 	}
 

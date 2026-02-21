@@ -1,12 +1,8 @@
-package schedule
+package internal
 
 // Utility for managing scouter schedules
 
 import (
-	"GreenScoutBackend/constants"
-	filemanager "GreenScoutBackend/fileManager"
-	greenlogger "GreenScoutBackend/greenLogger"
-	"GreenScoutBackend/userDB"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -18,13 +14,13 @@ var scoutDB *sql.DB
 
 // Opens the reference to the scouting database
 func InitScoutDB() {
-	dbPath := filepath.Join(constants.CachedConfigs.RuntimeDirectory, "scout.db")
-	dbRef, dbOpenErr := sql.Open(constants.CachedConfigs.SqliteDriver, dbPath)
+	dbPath := filepath.Join(CachedConfigs.RuntimeDirectory, "scout.db")
+	dbRef, dbOpenErr := sql.Open(CachedConfigs.SqliteDriver, dbPath)
 
 	scoutDB = dbRef
 
 	if dbOpenErr != nil {
-		greenlogger.LogErrorf(dbOpenErr, "Problem opening database %v", dbPath)
+		LogErrorf(dbOpenErr, "Problem opening database %v", dbPath)
 	}
 }
 
@@ -39,7 +35,7 @@ func RetrieveSingleScouter(name string, isUUID bool) string {
 	if isUUID {
 		uuid = name
 	} else {
-		uuid, _ = userDB.GetUUID(name, true)
+		uuid, _ = GetUUID(name, true)
 	}
 
 	response := scoutDB.QueryRow("select schedule from individuals where uuid = ?", uuid)
@@ -48,7 +44,7 @@ func RetrieveSingleScouter(name string, isUUID bool) string {
 
 	scanErr := response.Scan(&ranges)
 	if scanErr != nil && !errors.Is(scanErr, sql.ErrNoRows) {
-		greenlogger.LogErrorf(scanErr, "Problem scanning response %v", response)
+		LogErrorf(scanErr, "Problem scanning response %v", response)
 	}
 
 	if ranges == "" {
@@ -67,7 +63,7 @@ func retrieveScouterAsObject(name string, isUUID bool) ScoutRanges {
 
 	unmarshalErr := json.Unmarshal([]byte(scheduleString), &ranges)
 	if unmarshalErr != nil {
-		greenlogger.LogErrorf(unmarshalErr, "Problem Unmarshalling %v", []byte(scheduleString))
+		LogErrorf(unmarshalErr, "Problem Unmarshalling %v", []byte(scheduleString))
 	}
 
 	return ranges
@@ -80,12 +76,12 @@ func AddIndividualSchedule(name string, nameIsUUID bool, ranges ScoutRanges) {
 	if nameIsUUID {
 		uuid = name
 	} else {
-		uuid, _ = userDB.GetUUID(name, true)
+		uuid, _ = GetUUID(name, true)
 	}
 
 	rangeBytes, marshalErr := json.Marshal(ranges)
 	if marshalErr != nil {
-		greenlogger.LogErrorf(marshalErr, "Problem marshalling %v", ranges)
+		LogErrorf(marshalErr, "Problem marshalling %v", ranges)
 	}
 
 	rangeString := string(rangeBytes)
@@ -98,21 +94,21 @@ func AddIndividualSchedule(name string, nameIsUUID bool, ranges ScoutRanges) {
 
 		newRangeBytes, err := json.Marshal(newRanges)
 		if err != nil {
-			greenlogger.LogErrorf(err, "Problem marshalling %v", ranges)
+			LogErrorf(err, "Problem marshalling %v", ranges)
 		}
 
 		rangeString = string(newRangeBytes)
 
 		_, resultErr := scoutDB.Exec("update individuals set schedule = ? where uuid = ?", rangeString, uuid)
 		if resultErr != nil {
-			greenlogger.LogErrorf(resultErr, "Problem executing sql command %v with args %v", "update individuals set ranges = ? where uuid = ?", []any{rangeString, uuid})
+			LogErrorf(resultErr, "Problem executing sql command %v with args %v", "update individuals set ranges = ? where uuid = ?", []any{rangeString, uuid})
 		}
 
 	} else {
-		user := userDB.UUIDToUser(uuid)
+		user := UUIDToUser(uuid)
 		_, resultErr := scoutDB.Exec("insert into individuals values(?, ?, ?)", uuid, user, rangeString)
 		if resultErr != nil {
-			greenlogger.LogErrorf(resultErr, "Problem executing sql command %v with args %v", "insert into individuals values(?, ?, ?)", []any{uuid, user, rangeString})
+			LogErrorf(resultErr, "Problem executing sql command %v with args %v", "insert into individuals values(?, ?, ?)", []any{uuid, user, rangeString})
 		}
 	}
 
@@ -126,26 +122,26 @@ func userInSchedule(database *sql.DB, uuid string) bool {
 	err := result.Scan(&resultstore)
 
 	if err != nil {
-		greenlogger.LogErrorf(err, "Problem scanning response %v", result)
+		LogErrorf(err, "Problem scanning response %v", result)
 	}
 
 	return resultstore == 1
 }
 
-// Wipes the schedule.json file
+// Wipes the json file
 func WipeSchedule() {
-	schedPath := filepath.Join(constants.CachedConfigs.RuntimeDirectory, "schedule.json")
-	file, openErr := filemanager.OpenWithPermissions(schedPath)
+	schedPath := filepath.Join(CachedConfigs.RuntimeDirectory, "json")
+	file, openErr := OpenWithPermissions(schedPath)
 
 	if openErr != nil {
-		greenlogger.LogErrorf(openErr, "Problem opening %v", schedPath)
+		LogErrorf(openErr, "Problem opening %v", schedPath)
 	}
 
 	_, writeErr := file.WriteString("{}")
 	if writeErr != nil {
-		greenlogger.LogErrorf(writeErr, "Problem resetting %v", schedPath)
+		LogErrorf(writeErr, "Problem resetting %v", schedPath)
 	} else {
-		greenlogger.LogMessage("Successfully wiped schedule.json")
+		LogMessage("Successfully wiped json")
 	}
 
 	file.Close()

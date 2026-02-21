@@ -1,19 +1,8 @@
-package server
+package internal
 
 // Centralized location to handle all server, http, and API endpoint related things
 
 import (
-	"GreenScoutBackend/constants"
-	filemanager "GreenScoutBackend/fileManager"
-	"GreenScoutBackend/gallery"
-	greenlogger "GreenScoutBackend/greenLogger"
-	"GreenScoutBackend/lib"
-	"GreenScoutBackend/pfp"
-	"GreenScoutBackend/rsaUtil"
-	"GreenScoutBackend/schedule"
-	"GreenScoutBackend/setup"
-	"GreenScoutBackend/sheet"
-	"GreenScoutBackend/userDB"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -46,9 +35,9 @@ func RunServerLoop() {
 
 // The call to read and parse one file in InputtedJson
 func iterativeServerCall() {
-	allJson, readErr := os.ReadDir(constants.JsonInDirectory)
+	allJson, readErr := os.ReadDir(JsonInDirectory)
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Problem reading file %v", constants.JsonInDirectory)
+		LogErrorf(readErr, "Problem reading file %v", JsonInDirectory)
 		return
 	}
 
@@ -59,74 +48,74 @@ func iterativeServerCall() {
 
 		// Parse and write to spreadsheet
 		if len(strings.Split(file.Name(), "_")) == 2 { // Pit Scouting // TODO: Change how we seperate the JSON yeah? Also change JSON file name format too. -Leon
-			pit, hadErrs := lib.ParsePitScout(file.Name())
+			pit, hadErrs := ParsePitScout(file.Name())
 
 			if !hadErrs {
-				if sheet.WritePitDataToLine(pit, lib.GetPitRow(pit.TeamNumber)) {
-					lib.MoveFile(filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonPitWrittenDirectory, file.Name()))
-					greenlogger.LogMessagef("Successfully Processed %v ", file.Name())
-					userDB.ModifyUserScore(pit.Scouter, userDB.Increase, 1)
+				if WritePitDataToLine(pit, GetPitRow(pit.TeamNumber)) {
+					MoveFile(filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonPitWrittenDirectory, file.Name()))
+					LogMessagef("Successfully Processed %v ", file.Name())
+					ModifyUserScore(pit.Scouter, Increase, 1)
 				} else { // Handle any errors writing
-					lib.MoveFile(filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
-					greenlogger.LogMessagef("Errors in writing %v to sheet, moved to %v", filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
+					MoveFile(filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
+					LogMessagef("Errors in writing %v to sheet, moved to %v", filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
 				}
 			} else { // Handle any errors opening
-				lib.MoveFile(filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
-				greenlogger.LogMessagef("Errors in processing %v, moved to %v", filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
+				MoveFile(filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
+				LogMessagef("Errors in processing %v, moved to %v", filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
 			}
 		} else {
-			team, hadErrs := lib.Parse(file.Name(), false)
+			team, hadErrs := Parse(file.Name(), false)
 
 			var successfullyWrote bool
 
 			if !hadErrs {
-				if allMatching := lib.GetAllMatching(file.Name()); constants.CachedConfigs.UsingMultiScouting && len(allMatching) > 0 { // Multi-scouting
-					var entries []lib.TeamData
+				if allMatching := GetAllMatching(file.Name()); CachedConfigs.UsingMultiScouting && len(allMatching) > 0 { // Multi-scouting
+					var entries []TeamData
 					entries = append(entries, team)
 					for _, foundFile := range allMatching {
 						if team.Rescouting { // If rescouting, discard other ones
-							if !lib.MoveFile(filepath.Join(constants.JsonWrittenDirectory, foundFile), filepath.Join(constants.JsonDiscardedDirectory, foundFile)) {
-								greenlogger.LogMessage("File " + filepath.Join(constants.JsonWrittenDirectory, foundFile) + " unable to be moved to Discarded")
+							if !MoveFile(filepath.Join(JsonWrittenDirectory, foundFile), filepath.Join(JsonDiscardedDirectory, foundFile)) {
+								LogMessage("File " + filepath.Join(JsonWrittenDirectory, foundFile) + " unable to be moved to Discarded")
 							}
 						} else {
 							// Parse and add to parsed data
-							parsedData, foundErrs := lib.Parse(foundFile, true)
+							parsedData, foundErrs := Parse(foundFile, true)
 							if !foundErrs {
 								entries = append(entries, parsedData)
 							} else {
-								if !lib.MoveFile(filepath.Join(constants.JsonWrittenDirectory, foundFile), filepath.Join(constants.JsonErroredDirectory, foundFile)) {
-									greenlogger.FatalLogMessage("File " + filepath.Join(constants.JsonWrittenDirectory, foundFile) + " unable to be moved to Errored, investigate this!")
+								if !MoveFile(filepath.Join(JsonWrittenDirectory, foundFile), filepath.Join(JsonErroredDirectory, foundFile)) {
+									FatalLogMessage("File " + filepath.Join(JsonWrittenDirectory, foundFile) + " unable to be moved to Errored, investigate this!")
 								}
 							}
 						}
 					}
 
 					if team.Rescouting {
-						successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
+						successfullyWrote = WriteTeamDataToLine(team, GetRow(team))
 					} else {
-						successfullyWrote = sheet.WriteMultiScoutedTeamDataToLine(
-							lib.CompileMultiMatch(entries...),
-							lib.GetRow(team),
+						successfullyWrote = WriteMultiScoutedTeamDataToLine(
+							CompileMultiMatch(entries...),
+							GetRow(team),
 							entries,
 						)
 					}
 				} else { // Single scouting
-					successfullyWrote = sheet.WriteTeamDataToLine(team, 2) //sheetWriter.go's append will make sure this won't override another bit of data
-					//successfullyWrote = sheet.WriteTeamDataToLine(team, lib.GetRow(team))
+					successfullyWrote = WriteTeamDataToLine(team, 2) //sheetWriter.go's append will make sure this won't override another bit of data
+					//successfullyWrote = WriteTeamDataToLine(team, GetRow(team))
 				}
 
 				//Currently, there is no handling if one can't move. It will loop infinitley. This could be something to improve.
 				if successfullyWrote {
-					lib.MoveFile(filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonWrittenDirectory, file.Name()))
-					greenlogger.LogMessagef("Successfully Processed %v ", file.Name())
-					userDB.ModifyUserScore(team.Scouter, userDB.Increase, 1)
+					MoveFile(filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonWrittenDirectory, file.Name()))
+					LogMessagef("Successfully Processed %v ", file.Name())
+					ModifyUserScore(team.Scouter, Increase, 1)
 				} else {
-					lib.MoveFile(filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
-					greenlogger.LogMessagef("Errors in writing %v to sheet, moved to %v", filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
+					MoveFile(filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
+					LogMessagef("Errors in writing %v to sheet, moved to %v", filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
 				}
 			} else {
-				lib.MoveFile(filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
-				greenlogger.LogMessagef("Errors in processing %v, moved to %v", filepath.Join(constants.JsonInDirectory, file.Name()), filepath.Join(constants.JsonErroredDirectory, file.Name()))
+				MoveFile(filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
+				LogMessagef("Errors in processing %v, moved to %v", filepath.Join(JsonInDirectory, file.Name()), filepath.Join(JsonErroredDirectory, file.Name()))
 			}
 
 		}
@@ -181,8 +170,8 @@ func SetupServer() *http.Server {
 		// WriteTimeout: 20 * time.Second,
 	}
 
-	if constants.CachedConfigs.LogConfigs.Logging && constants.CachedConfigs.LogConfigs.LoggingHttp {
-		jsrv.ErrorLog = greenlogger.GetLogger()
+	if CachedConfigs.LogConfigs.Logging && CachedConfigs.LogConfigs.LoggingHttp {
+		jsrv.ErrorLog = GetLogger()
 	}
 
 	return jsrv
@@ -196,25 +185,25 @@ func handleRoot(writer http.ResponseWriter, request *http.Request) {
 // Handles posting of scouting JSON to the server
 func postJson(writer http.ResponseWriter, request *http.Request) {
 
-	_, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate")) //Don't care about specific role for post, everyone that is auth'd can.
+	_, authenticated := VerifyCertificate(request.Header.Get("Certificate")) //Don't care about specific role for post, everyone that is auth'd can.
 
 	if authenticated {
 		requestBytes, readErr := io.ReadAll(request.Body)
 
 		if readErr != nil {
-			greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+			LogErrorf(readErr, "Problem reading %v", request.Body)
 		}
 
-		var team lib.TeamData
+		var team TeamData
 		unmarshalErr := json.Unmarshal(requestBytes, &team)
 
 		if unmarshalErr != nil { // Handle mangling
-			greenlogger.LogErrorf(unmarshalErr, "MANGLED: %v", requestBytes)
+			LogErrorf(unmarshalErr, "MANGLED: %v", requestBytes)
 
-			newFileName := filepath.Join(constants.JsonMangledDirectory, time.Now().String()+".json")
-			mangledFile, openErr := filemanager.OpenWithPermissions(newFileName)
+			newFileName := filepath.Join(JsonMangledDirectory, time.Now().String()+".json")
+			mangledFile, openErr := OpenWithPermissions(newFileName)
 			if openErr != nil {
-				greenlogger.LogErrorf(openErr, "Problem creating %v", newFileName)
+				LogErrorf(openErr, "Problem creating %v", newFileName)
 			}
 
 			defer mangledFile.Close()
@@ -227,21 +216,21 @@ func postJson(writer http.ResponseWriter, request *http.Request) {
 			//TODO: file naming stuff here -Leon
 			fileName := fmt.Sprintf(
 				"%s_%v_%s_%v",
-				lib.GetCurrentEvent(),
+				GetCurrentEvent(),
 				team.Match.Number,
-				lib.GetDSString(team.DriverStation.IsBlue, uint(team.DriverStation.Number)),
+				GetDSString(team.DriverStation.IsBlue, uint(team.DriverStation.Number)),
 				time.Now().UnixMilli(),
 			)
 
-			file, openErr := filemanager.OpenWithPermissions(filepath.Join(constants.JsonInDirectory, fileName+".json"))
+			file, openErr := OpenWithPermissions(filepath.Join(JsonInDirectory, fileName+".json"))
 			if openErr != nil {
-				greenlogger.LogErrorf(openErr, "Problem creating %v", filepath.Join(constants.JsonInDirectory, fileName+".json"))
+				LogErrorf(openErr, "Problem creating %v", filepath.Join(JsonInDirectory, fileName+".json"))
 			}
 			defer file.Close()
 
 			encodeErr := json.NewEncoder(file).Encode(&team)
 			if encodeErr != nil {
-				greenlogger.LogErrorf(encodeErr, "Problem encoding %v", team)
+				LogErrorf(encodeErr, "Problem encoding %v", team)
 			}
 
 			if request.Header.Get("joshtown") == "tumble" { //This was used for testing during 2024 GCR. It also used to be more crudely worded.
@@ -258,25 +247,25 @@ func postJson(writer http.ResponseWriter, request *http.Request) {
 
 // Handles posting of pit scouting JSON to the server
 func postPitScout(writer http.ResponseWriter, request *http.Request) {
-	_, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate")) //Don't care about specific role for post, everyone that is auth'd can.
+	_, authenticated := VerifyCertificate(request.Header.Get("Certificate")) //Don't care about specific role for post, everyone that is auth'd can.
 
 	if authenticated {
 		requestBytes, readErr := io.ReadAll(request.Body)
 
 		if readErr != nil {
-			greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+			LogErrorf(readErr, "Problem reading %v", request.Body)
 		}
 
-		var pit lib.PitScoutingData
+		var pit PitScoutingData
 		unmarshalErr := json.Unmarshal(requestBytes, &pit)
 
 		if unmarshalErr != nil { // Handling mangling
-			greenlogger.LogErrorf(unmarshalErr, "MANGLED: %v", requestBytes)
+			LogErrorf(unmarshalErr, "MANGLED: %v", requestBytes)
 
-			newFileName := filepath.Join(constants.JsonMangledDirectory, time.Now().String()+".json")
-			mangledFile, openErr := filemanager.OpenWithPermissions(newFileName)
+			newFileName := filepath.Join(JsonMangledDirectory, time.Now().String()+".json")
+			mangledFile, openErr := OpenWithPermissions(newFileName)
 			if openErr != nil {
-				greenlogger.LogErrorf(openErr, "Problem creating %v", newFileName)
+				LogErrorf(openErr, "Problem creating %v", newFileName)
 			}
 
 			defer mangledFile.Close()
@@ -288,19 +277,19 @@ func postPitScout(writer http.ResponseWriter, request *http.Request) {
 			//EVENT_TEAM.json
 			fileName := fmt.Sprintf(
 				"%s_%v",
-				lib.GetCurrentEvent(),
+				GetCurrentEvent(),
 				pit.TeamNumber,
 			)
 
-			file, openErr := filemanager.OpenWithPermissions(filepath.Join(constants.JsonInDirectory, fileName+".json"))
+			file, openErr := OpenWithPermissions(filepath.Join(JsonInDirectory, fileName+".json"))
 			if openErr != nil {
-				greenlogger.LogErrorf(openErr, "Problem creating %v", filepath.Join(constants.JsonInDirectory, fileName+".json"))
+				LogErrorf(openErr, "Problem creating %v", filepath.Join(JsonInDirectory, fileName+".json"))
 			}
 			defer file.Close()
 
 			encodeErr := json.NewEncoder(file).Encode(&pit)
 			if encodeErr != nil {
-				greenlogger.LogErrorf(encodeErr, "Problem encoding %v", pit)
+				LogErrorf(encodeErr, "Problem encoding %v", pit)
 			}
 
 			httpResponsef(writer, "Problem writing http response to JSON post request", "Processed %v\n", fileName)
@@ -313,17 +302,17 @@ func postPitScout(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to change the event key
 func handleKeyChange(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
-			greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+			LogErrorf(readErr, "Problem reading %v", request.Body)
 			return
 		}
 
 		newKey := string(requestBytes)
 
-		if setup.SetEventKey(newKey) {
+		if SetEventKey(newKey) {
 			httpResponsef(writer, "Problem writing http response to successful event key change", "Successfully changed event key to %v\n", newKey)
 		} else {
 			httpResponsef(writer, "Problem writing http response to unsuccessful event key change", "There was a problem changing the event key to %v, make sure it's valid!\n", newKey)
@@ -335,17 +324,17 @@ func handleKeyChange(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-// Handles requests for schedule.json
+// Handles requests for json
 func handleScheduleRequest(writer http.ResponseWriter, request *http.Request) {
-	schedPath := filepath.Join(constants.CachedConfigs.RuntimeDirectory, "schedule.json")
+	schedPath := filepath.Join(CachedConfigs.RuntimeDirectory, "json")
 	file, openErr := os.Open(schedPath)
 	if openErr != nil {
-		greenlogger.LogErrorf(openErr, "Problem opening %v", schedPath)
+		LogErrorf(openErr, "Problem opening %v", schedPath)
 	}
 
 	fileBytes, readErr := io.ReadAll(file)
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+		LogErrorf(readErr, "Problem reading %v", request.Body)
 	}
 
 	httpResponsef(writer, "Problem writing http response to schedule request", "%s", string(fileBytes))
@@ -353,31 +342,31 @@ func handleScheduleRequest(writer http.ResponseWriter, request *http.Request) {
 
 // Handles logging in
 func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
-	var loginRequest userDB.LoginAttempt
+	var loginRequest LoginAttempt
 
 	decodeErr := json.NewDecoder(request.Body).Decode(&loginRequest)
 	if decodeErr != nil && !errors.Is(decodeErr, io.EOF) {
-		greenlogger.LogErrorf(decodeErr, "Problem decoding %v", request.Body)
+		LogErrorf(decodeErr, "Problem decoding %v", request.Body)
 	}
 
 	encryptedBytes, err := base64.StdEncoding.DecodeString(loginRequest.EncryptedPassword)
 	if err != nil {
-		greenlogger.LogErrorf(err, "Problem decoding %v", loginRequest.EncryptedPassword)
+		LogErrorf(err, "Problem decoding %v", loginRequest.EncryptedPassword)
 	}
 
-	role, authenticated := userDB.Authenticate(encryptedBytes)
+	role, authenticated := Authenticate(encryptedBytes)
 
 	if authenticated {
-		uuid, _ := userDB.GetUUID(loginRequest.Username, true)
+		uuid, _ := GetUUID(loginRequest.Username, true)
 
 		writer.Header().Add("UUID", fmt.Sprintf("%v", uuid))
-		writer.Header().Add("Certificate", fmt.Sprintf("%v", userDB.GetCertificate(loginRequest.Username, role)))
+		writer.Header().Add("Certificate", fmt.Sprintf("%v", GetCertificate(loginRequest.Username, role)))
 
 		if role == "super" {
-			userDB.AddBadge(uuid, userDB.Badge{ID: string(userDB.Admin)})
-			userDB.AddBadge(uuid, userDB.Badge{ID: string(userDB.Super)})
+			AddBadge(uuid, Badge{ID: string(Admin)})
+			AddBadge(uuid, Badge{ID: string(Super)})
 		} else if role == "admin" {
-			userDB.AddBadge(uuid, userDB.Badge{ID: string(userDB.Admin)})
+			AddBadge(uuid, Badge{ID: string(Admin)})
 		}
 	}
 
@@ -390,21 +379,21 @@ func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 func servePublicKey(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Add("Content-Type", "application/x-pem-file")
 
-	httpResponsef(writer, "Problem serving public key", "%v", rsaUtil.GetPublicKey())
+	httpResponsef(writer, "Problem serving public key", "%v", GetPublicKey())
 }
 
 // Handles changing the google sheets id
 func handleSheetChange(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
-			greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+			LogErrorf(readErr, "Problem reading %v", request.Body)
 		}
 
 		newID := string(requestBytes)
 
-		response := sheet.UpdateSheetID(newID)
+		response := UpdateSheetID(newID)
 
 		httpResponsef(writer, "Problem writing http response to sheet change request", "%s", response)
 	}
@@ -414,33 +403,33 @@ func handleSheetChange(writer http.ResponseWriter, request *http.Request) {
 func serveScouterSchedule(writer http.ResponseWriter, request *http.Request) {
 	requestBytes, readErr := io.ReadAll(request.Body)
 	if readErr != nil {
-		greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+		LogErrorf(readErr, "Problem reading %v", request.Body)
 	}
 
 	nameToLookup := string(requestBytes)
 
-	response := schedule.RetrieveSingleScouter(nameToLookup, false)
+	response := RetrieveSingleScouter(nameToLookup, false)
 
 	httpResponsef(writer, "Problem serving scouter schedule", "%s", response)
 }
 
 // Handles adding schedules to a given scouter
 func addIndividualSchedule(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
-			greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+			LogErrorf(readErr, "Problem reading %v", request.Body)
 		}
-		var requestStruct schedule.ScoutRanges
+		var requestStruct ScoutRanges
 
 		nameToLookup := request.Header.Get("userInput")
 		unmarshalErr := json.Unmarshal(requestBytes, &requestStruct)
 		if unmarshalErr != nil {
-			greenlogger.LogErrorf(unmarshalErr, "Error unmarshalling %v", requestBytes)
+			LogErrorf(unmarshalErr, "Error unmarshalling %v", requestBytes)
 		}
 
-		schedule.AddIndividualSchedule(nameToLookup, true, requestStruct)
+		AddIndividualSchedule(nameToLookup, true, requestStruct)
 
 		httpResponsef(writer, "Problem writing http response for individual schedule change request", "Successfully added schedule for %s", nameToLookup)
 	}
@@ -458,30 +447,30 @@ func serveLeaderboard(writer http.ResponseWriter, request *http.Request) {
 		lbType = "score"
 	}
 
-	leaderboard := userDB.GetLeaderboard(lbType)
+	leaderboard := GetLeaderboard(lbType)
 	encodeErr := json.NewEncoder(writer).Encode(leaderboard)
 	if encodeErr != nil {
-		greenlogger.LogErrorf(encodeErr, "Problem encoding %v", leaderboard)
+		LogErrorf(encodeErr, "Problem encoding %v", leaderboard)
 	}
 }
 
 // Handles requests to alter the leaderboard
 func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
-			greenlogger.LogErrorf(readErr, "Problem reading %v", request.Body)
+			LogErrorf(readErr, "Problem reading %v", request.Body)
 		}
 
-		var requestStruct userDB.ModRequest
+		var requestStruct ModRequest
 
 		unmarshalErr := json.Unmarshal(requestBytes, &requestStruct)
 		if unmarshalErr != nil {
-			greenlogger.LogErrorf(unmarshalErr, "Error unmarshalling %v", requestBytes)
+			LogErrorf(unmarshalErr, "Error unmarshalling %v", requestBytes)
 		}
 
-		userDB.ModifyUserScore(requestStruct.Name, requestStruct.Mod, requestStruct.By)
+		ModifyUserScore(requestStruct.Name, requestStruct.Mod, requestStruct.By)
 
 		httpResponsef(writer, "Problem writing http response for score change request", "Successfully modified score of %s", requestStruct.Name)
 	}
@@ -493,7 +482,7 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 // The okCode parameter exists because some requests require a 200 response even before acting. This is honestly just trial and error to determine.
 func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", constants.CachedConfigs.FrontendDomain)
+		w.Header().Set("Access-Control-Allow-Origin", CachedConfigs.FrontendDomain)
 		w.Header().Set("Access-Control-Allow-Methods", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "*, Certificate")
 		w.Header().Set("Access-Control-Expose-Headers", "*, Certificate")
@@ -508,12 +497,12 @@ func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
 
 // Serves the entire list of users
 func serveUsersRequest(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
-		users := userDB.GetAllUsers()
-		encodeErr := json.NewEncoder(writer).Encode(userDB.GetAllUsers())
+		users := GetAllUsers()
+		encodeErr := json.NewEncoder(writer).Encode(GetAllUsers())
 		if encodeErr != nil {
-			greenlogger.LogErrorf(encodeErr, "Problem encoding %v", users)
+			LogErrorf(encodeErr, "Problem encoding %v", users)
 		}
 	}
 }
@@ -521,78 +510,78 @@ func serveUsersRequest(writer http.ResponseWriter, request *http.Request) {
 // Handles the request for the scouters of a specific match
 func serveMatchScouter(writer http.ResponseWriter, request *http.Request) {
 
-	var match lib.MatchInfoRequest
+	var match MatchInfoRequest
 	decodeErr := json.NewDecoder(request.Body).Decode(&match)
 	if decodeErr != nil {
-		greenlogger.LogErrorf(decodeErr, "Problem decoding %v", request.Body)
+		LogErrorf(decodeErr, "Problem decoding %v", request.Body)
 	}
 
-	httpResponsef(writer, "Problem serving scouter for a given match", "%s", lib.GetNameFromWritten(match))
+	httpResponsef(writer, "Problem serving scouter for a given match", "%s", GetNameFromWritten(match))
 }
 
 // Handles request for individual user information
 func serveUserInfo(writer http.ResponseWriter, request *http.Request) {
-	info := userDB.GetUserInfo(request.Header.Get("username"))
+	info := GetUserInfo(request.Header.Get("username"))
 
-	if request.Header.Get("uuid") != "" && userDB.UUIDToUser(request.Header.Get("uuid")) == request.Header.Get("username") {
-		var accoladesNotified []userDB.AccoladeData
+	if request.Header.Get("uuid") != "" && UUIDToUser(request.Header.Get("uuid")) == request.Header.Get("username") {
+		var accoladesNotified []AccoladeData
 		for _, accolade := range info.Accolades {
-			accoladesNotified = append(accoladesNotified, userDB.AccoladeData{Accolade: accolade.Accolade, Notified: true})
+			accoladesNotified = append(accoladesNotified, AccoladeData{Accolade: accolade.Accolade, Notified: true})
 		}
 
-		userDB.SetAccolades(request.Header.Get("uuid"), accoladesNotified)
+		SetAccolades(request.Header.Get("uuid"), accoladesNotified)
 	}
 
 	encodeErr := json.NewEncoder(writer).Encode(info)
 	if encodeErr != nil {
-		greenlogger.LogErrorf(encodeErr, "Problem encoding %v", info)
+		LogErrorf(encodeErr, "Problem encoding %v", info)
 	}
 
 }
 
 // Serves a specific type of user information, used in the admin user information editing on the frontend
 func serveUserInfoForAdmins(writer http.ResponseWriter, request *http.Request) {
-	info := userDB.GetAdminUserInfo(request.Header.Get("uuid"))
+	info := GetAdminUserInfo(request.Header.Get("uuid"))
 
 	encodeErr := json.NewEncoder(writer).Encode(info)
 	if encodeErr != nil {
-		greenlogger.LogErrorf(encodeErr, "Problem encoding %v", info)
+		LogErrorf(encodeErr, "Problem encoding %v", info)
 	}
 }
 
 // Handles requests to alter display names
 func setDisplayName(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
-	uuid, _ := userDB.GetUUID(request.Header.Get("username"), true)
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
+	uuid, _ := GetUUID(request.Header.Get("username"), true)
 
 	isUser := uuid == request.Header.Get("uuid")
 
 	if (authenticated && (role == "admin" || role == "super")) || isUser {
-		userDB.SetDisplayName(request.Header.Get("username"), request.Header.Get("displayName"))
+		SetDisplayName(request.Header.Get("username"), request.Header.Get("displayName"))
 
-		info := userDB.GetUserInfo(request.Header.Get("username"))
+		info := GetUserInfo(request.Header.Get("username"))
 		writer.WriteHeader(200)
 		encodeErr := json.NewEncoder(writer).Encode(info)
 		if encodeErr != nil {
-			greenlogger.LogErrorf(encodeErr, "Problem encoding %v", info)
+			LogErrorf(encodeErr, "Problem encoding %v", info)
 		}
 	}
 }
 
 // Handles requests to alter profile pictures
 func setPfp(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
-	uuid, _ := userDB.GetUUID(request.Header.Get("username"), true)
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
+	uuid, _ := GetUUID(request.Header.Get("username"), true)
 
 	isUser := uuid == request.Header.Get("uuid")
 
 	if (authenticated && (role == "admin" || role == "super")) || isUser {
-		userDB.SetPfp(request.Header.Get("username"), request.Header.Get("Filename"))
+		SetPfp(request.Header.Get("username"), request.Header.Get("Filename"))
 		requestBytes, err := io.ReadAll(request.Body)
 		if err != nil {
-			greenlogger.LogErrorf(err, "Problem reading %v", request.Body)
+			LogErrorf(err, "Problem reading %v", request.Body)
 		}
-		if pfp.WritePfp(requestBytes, request.Header.Get("Filename")) {
+		if WritePfp(requestBytes, request.Header.Get("Filename")) {
 			writer.WriteHeader(200)
 		} else {
 			writer.WriteHeader(500)
@@ -602,59 +591,59 @@ func setPfp(writer http.ResponseWriter, request *http.Request) {
 
 // Handles additions of accolades from the frontend
 func handleFrontendAdditions(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
-	uuid, _ := userDB.GetUUID(request.Header.Get("username"), true)
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
+	uuid, _ := GetUUID(request.Header.Get("username"), true)
 
 	isUser := uuid == request.Header.Get("uuid")
 
 	if (authenticated && (role == "admin" || role == "super")) || isUser {
-		var Additions userDB.FrontendAdds
+		var Additions FrontendAdds
 		err := json.NewDecoder(request.Body).Decode(&Additions)
 		if err != nil {
-			greenlogger.LogErrorf(err, "Problem decoding %v", request.Body)
+			LogErrorf(err, "Problem decoding %v", request.Body)
 		}
 
-		userDB.ConsumeFrontendAdditions(Additions, true)
+		ConsumeFrontendAdditions(Additions, true)
 	}
 }
 
 // Handles requests to alter leaderboard colors
 func handleColorChange(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
-	uuid, _ := userDB.GetUUID(request.Header.Get("username"), true)
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
+	uuid, _ := GetUUID(request.Header.Get("username"), true)
 
 	isUser := uuid == request.Header.Get("uuid")
 
 	if (authenticated && (role == "admin" || role == "super")) || isUser {
-		userDB.SetColor(uuid, parseColor(request.Header.Get("color")))
+		SetColor(uuid, parseColor(request.Header.Get("color")))
 	}
 }
 
 // Conversion method from the string header of the color to the const value index
-func parseColor(colStr string) userDB.LBColor {
+func parseColor(colStr string) LBColor {
 	switch colStr {
 	case "green":
-		return userDB.Green
+		return Green
 	case "gold":
-		return userDB.Gold
+		return Gold
 	}
-	return userDB.Default
+	return Default
 }
 
 // Handles requests to add badges
 func addBadge(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
 		usernameToAdd := request.Header.Get("username")
-		uuid, _ := userDB.GetUUID(usernameToAdd, true)
+		uuid, _ := GetUUID(usernameToAdd, true)
 
-		var badge userDB.Badge
+		var badge Badge
 		decodeErr := json.NewDecoder(request.Body).Decode(&badge)
 		if decodeErr != nil {
-			greenlogger.LogErrorf(decodeErr, "Problem decoding %v", request.Body)
+			LogErrorf(decodeErr, "Problem decoding %v", request.Body)
 		}
 
-		userDB.AddBadge(uuid, badge)
+		AddBadge(uuid, badge)
 
 		httpResponsef(writer, "Problem writing http response for badge addition request", "Successfully added %s to %s", badge.ID, usernameToAdd)
 	}
@@ -662,18 +651,18 @@ func addBadge(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to add badges
 func setBadges(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "admin" || role == "super") {
 		usernameToAdd := request.Header.Get("username")
-		uuid, _ := userDB.GetUUID(usernameToAdd, true)
+		uuid, _ := GetUUID(usernameToAdd, true)
 
-		var badges []userDB.Badge
+		var badges []Badge
 		decodeErr := json.NewDecoder(request.Body).Decode(&badges)
 		if decodeErr != nil {
-			greenlogger.LogErrorf(decodeErr, "Problem decoding %v", request.Body)
+			LogErrorf(decodeErr, "Problem decoding %v", request.Body)
 		}
 
-		userDB.SetBadges(uuid, badges)
+		SetBadges(uuid, badges)
 
 		httpResponsef(writer, "Problem writing http response for badge addition request", "Successfully set badges of %s to %v", usernameToAdd, badges)
 	}
@@ -681,7 +670,7 @@ func setBadges(writer http.ResponseWriter, request *http.Request) {
 
 // A simple check for if the certificate is valid
 func handleCertificateVerification(writer http.ResponseWriter, request *http.Request) {
-	_, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	_, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 
 	if authenticated {
 		writer.WriteHeader(200)
@@ -699,18 +688,18 @@ func handlePfpRequest(writer http.ResponseWriter, request *http.Request) {
 		username = request.URL.Query().Get("username")
 	}
 
-	userInfo := userDB.GetUserInfo(username)
+	userInfo := GetUserInfo(username)
 
-	if pfp.CheckForPfp(userInfo.Pfp) {
+	if CheckForPfp(userInfo.Pfp) {
 		http.ServeFile(writer, request, userInfo.Pfp)
 	} else {
-		http.ServeFile(writer, request, constants.DefaultPfpPath)
+		http.ServeFile(writer, request, DefaultPfpPath)
 	}
 }
 
 // Serves general information about the current event
 func handleGeneralInfoRequest(writer http.ResponseWriter, request *http.Request) {
-	httpResponsef(writer, "Problem writing response to general info request", `{"EventKey": "%v", "EventName": "%v"}`, lib.GetCurrentEvent(), constants.CachedConfigs.EventKeyName)
+	httpResponsef(writer, "Problem writing response to general info request", `{"EventKey": "%v", "EventName": "%v"}`, GetCurrentEvent(), CachedConfigs.EventKeyName)
 }
 
 // Serves events.json
@@ -722,18 +711,18 @@ func handleEventsRequest(writer http.ResponseWriter, request *http.Request) {
 func handleGalleryRequest(writer http.ResponseWriter, request *http.Request) {
 	ind, err := strconv.ParseInt(request.URL.Query().Get("index"), 10, 64)
 	if err != nil {
-		greenlogger.LogMessagef("Problem parsing %v as int", request.URL.Query().Get("index"))
+		LogMessagef("Problem parsing %v as int", request.URL.Query().Get("index"))
 	}
 
-	http.ServeFile(writer, request, gallery.GetImage(int(ind)))
+	http.ServeFile(writer, request, GetImage(int(ind)))
 
 }
 
 // Serves the spreadsheet link
 func serveSpreadsheet(writer http.ResponseWriter, request *http.Request) {
-	role, authenticated := userDB.VerifyCertificate(request.Header.Get("Certificate"))
+	role, authenticated := VerifyCertificate(request.Header.Get("Certificate"))
 	if authenticated && (role == "1816" || role == "admin" || role == "super") {
-		httpResponsef(writer, "Error serving spreadsheet", "https://docs.google.com/spreadsheets/d/"+constants.CachedConfigs.SpreadSheetID)
+		httpResponsef(writer, "Error serving spreadsheet", "https://docs.google.com/spreadsheets/d/"+CachedConfigs.SpreadSheetID)
 	}
 }
 
@@ -742,6 +731,6 @@ func httpResponsef(writer http.ResponseWriter, errDescription string, message st
 	_, err := fmt.Fprintf(writer, message, args...)
 
 	if err != nil {
-		greenlogger.LogError(err, errDescription)
+		LogError(err, errDescription)
 	}
 }

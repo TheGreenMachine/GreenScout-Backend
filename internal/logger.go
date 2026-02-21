@@ -1,10 +1,8 @@
-package greenlogger
+package internal
 
 // Logging wrapper to be used for error handling and general logging.
 
 import (
-	"GreenScoutBackend/constants"
-	filemanager "GreenScoutBackend/fileManager"
 	"fmt"
 	"log"
 	"os"
@@ -21,9 +19,9 @@ var logFileAlive bool
 // Creates the log file and stores it to greenLogger/logger.go.logFile, setting logFileAlive to true.
 // Panics if it is unable to create the file.
 func InitLogFile() {
-	filemanager.MkDirWithPermissions(constants.DefaultLogDirectory)
-	logFilePath := filepath.Join(constants.DefaultLogDirectory, "GSLog_"+time.Now().Format("2006-01-02_h15m04s05")) //time format YEAR-MM-DD
-	file, err := filemanager.OpenWithPermissions(logFilePath)
+	MkDirWithPermissions(DefaultLogDirectory)
+	logFilePath := filepath.Join(DefaultLogDirectory, "GSLog_"+time.Now().Format("2006-01-02_h15m04s05")) //time format YEAR-MM-DD
+	file, err := OpenWithPermissions(logFilePath)
 	if err != nil {
 		panic("ERR: Could not create log file! " + err.Error())
 	}
@@ -90,7 +88,7 @@ func ElogError(err error, message string) {
 	}
 }
 
-// Logs a message to the console and log file, closes the log file, and crashes the server.
+// Logs a message to the console and log file, closes the log file, and crashes the
 // Only to be used in setup.
 func FatalLogMessage(message string) {
 	LogMessage("FATAL: " + message)
@@ -98,16 +96,16 @@ func FatalLogMessage(message string) {
 	os.Exit(1)
 }
 
-// Logs an error and its message to the console and log file before closign the log file and crashing the server.
+// Logs an error and its message to the console and log file before closign the log file and crashing the
 func FatalError(err error, message string) {
 	LogError(err, "FATAL: "+message)
 	logFile.Close()
 	os.Exit(1)
 }
 
-// A wrapper around filemanager.MkDirWithPermissions() that includes error handling.
+// A wrapper around MkDirWithPermissions() that includes error handling.
 func HandleMkdirAll(filepath string) {
-	mkDirErr := filemanager.MkDirWithPermissions(filepath)
+	mkDirErr := MkDirWithPermissions(filepath)
 
 	if mkDirErr != nil {
 		LogErrorf(mkDirErr, "Problem making directory %v", filepath)

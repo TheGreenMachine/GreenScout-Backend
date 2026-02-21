@@ -1,10 +1,8 @@
-package pfp
+package internal
 
 // Handles profile pictures
 
 import (
-	filemanager "GreenScoutBackend/fileManager"
-	greenlogger "GreenScoutBackend/greenLogger"
 	"bytes"
 	"image"
 	"image/jpeg"
@@ -22,10 +20,10 @@ func CheckForPfp(name string) bool {
 
 // Writes a provided stream of bytes to an image on the server, returning false if it is unable to encode as a png or jpeg
 func WritePfp(imgBytes []byte, name string) bool {
-	file, openErr := filemanager.OpenWithPermissions(name)
+	file, openErr := OpenWithPermissions(name)
 
 	if openErr != nil {
-		greenlogger.LogErrorf(openErr, "Problem opening %v", name)
+		LogErrorf(openErr, "Problem opening %v", name)
 	}
 
 	defer file.Close()
@@ -33,7 +31,7 @@ func WritePfp(imgBytes []byte, name string) bool {
 	image, format, imagErr := image.Decode(bytes.NewReader(imgBytes))
 
 	if imagErr != nil {
-		greenlogger.LogError(imagErr, "Problem decoding image")
+		LogError(imagErr, "Problem decoding image")
 	}
 
 	var encodeErr error
@@ -46,7 +44,7 @@ func WritePfp(imgBytes []byte, name string) bool {
 	}
 
 	if encodeErr != nil {
-		greenlogger.LogErrorf(encodeErr, "Problem encoding %v", name)
+		LogErrorf(encodeErr, "Problem encoding %v", name)
 	}
 
 	return encodeErr == nil
