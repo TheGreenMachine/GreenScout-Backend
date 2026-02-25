@@ -1,0 +1,9 @@
+services:
+  backend:
+    build:
+      context: ./ # The directory containing the source files (build context)
+      dockerfile: Dockerfile # The specific Dockerfile to use (relative to the context)
+    ports:
+      - "8000:5000"
+
+
