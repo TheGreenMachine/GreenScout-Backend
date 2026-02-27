@@ -32,7 +32,7 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/your-image-name:latest # Replace 'your-image-name'
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/greenscoutbackend:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
