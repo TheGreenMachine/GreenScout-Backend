@@ -21,6 +21,7 @@ func main() {
 
 	/// Setup
 	isSetup := slices.Contains(os.Args, "setup")
+	internal.SetSecureCookies(slices.Contains(os.Args, "test"))
 	publicHosting := false //Allows setup to bypass ip and domain validation to run localhost
 	serveTLS := false      //switches it between https and http [true for https]
 	updateDB := false

@@ -131,7 +131,7 @@
         "User accepted as: %s" (role)
         Header:
             UUID:
-            Certificate
+            Certificate;
             Role:
 
 "/dataEntry":
