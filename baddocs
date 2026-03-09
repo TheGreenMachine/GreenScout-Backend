@@ -1,0 +1,386 @@
+150
+
+"/": The root
+    Input: N/A
+    Ouput: nothingburger
+        "howdy"
+"/pub": RSA public key
+    Input: N/A
+    Ouput: An RSA public key
+        "-----BEGIN RSA PUBLIC KEY-----\nM"...
+"/schedule": i dont know
+    Input: N/A
+    Output:
+
+"/leaderboard": Leaderboard odered by score
+    Input: the score type of the leaderboard that you want back
+        Header:
+            type:
+                "HighScore" or "LifeScore" or ""
+    Output: An ordered array of UserInfo in json format
+        [
+            {
+                "Username": "",
+                "DisplayName": "",
+                "Accolades": null,
+                "Badges": [
+                    {
+                        "ID": "",
+                        "Description": ""
+                    },
+                ],
+                "Score": 0,
+                "LifeScore": 0,
+                "HighScore": 0,
+                "Color": 0,
+                "Pfp": ""
+            },
+        ]
+"/scouterLookup": Handles the request for the scouters of a specific match
+    Input: json of type MatchInfoRequest (json_parser.go 124)
+        Body:
+            {
+                "Match": 0,
+                "isBlue": false,
+                "DriverStation": 0
+            }
+    Output: A list of the names of the scouters in plain text separated by a comma
+
+"/userInfo": Fetches informtation about a user from a username. Updates an SQL table about accolades if uuid is supplied.
+    Input:
+        Header:
+            username: the username of the user you want to request
+            uuid: must belong to the username for it to be used. will be ignored otherwise
+    Output: UserInfo in json format
+        {
+            "Username": "",
+            "DisplayName": "",
+            "Accolades": null,
+            "Badges": [
+                {
+                    "ID": "",
+                    "Description": ""
+                },
+            ],
+            "Score": 0,
+            "LifeScore": 0,
+            "HighScore": 0,
+            "Color": 0,
+            "Pfp": ""
+        }
+
+"/certificateValid": Checks if a certificate if is valid
+    Input:
+        Header:
+            Certificate
+    Output: A status code 200 on success, 500 for invalid
+
+"/getPfp": Fetches the default profile picture or the pfp of the specified user
+    Input:
+        Header:
+            username: username of user
+    Output: the entire image file of the profile picture stored locally. most likely in jpg and png. not specified
+
+"/generalInfo": Serves general information about the current event
+    Input: N/A
+    Output: Hardcoded json with each value filled in to their respective slots
+        {
+            "EventKey": "",
+            "EventName": ""
+        }
+
+"/allEvents": Fetches all events from this year from the blue alliance
+    Input: N/A
+    Output: a file in the root named events.json
+        {
+            "YEARabc": "name",
+        }
+
+"/gallery": Serves the gallery image at the index passed in through the header
+    Input:
+        Query:
+            index
+    Output: the entire image file at the path the index points to
+
+"/adminUserInfo": Serves a specific type of user information, used in the admin user information editing on the frontend
+    Input:
+        Header:
+            uuid:
+    Output:
+        {
+            "Username": "",
+            "DisplayName": "",
+            "Badges": [
+                {
+                    "ID": "",
+                    "Description": ""
+                },
+            ],
+            "Color": 0,
+            "Pfp": ""
+        }
+
+"/login":
+    Input:
+        Body:
+            {
+                "Username": "",
+                "EncryptedPassword": ""
+            }
+    Output:
+        "User accepted as: %s" (role)
+        Header:
+            UUID:
+            Certificate;
+            Role:
+
+"/dataEntry":
+    Input:
+        Header:
+            Certificate:
+    Output:
+        {
+            "Team": 1234,
+            "Match": {
+                "Number": 0,
+                "isReplay": false
+            },
+            "Scouter": "",
+            "Driver Station": {
+                "Is Blue": false,
+                "Number": 0
+            },
+            "Cycles": [
+                {
+                    "Time": 0.00,
+                    "Type": "Coral",
+                    "Success": true
+                },
+                {
+                    "Time": 0.00,
+                    "Type": "",
+                    "Success": false
+                }
+            ],
+            "Pickup Locations": {
+                "Coral Ground": false,
+                "Coral Source": false,
+                "Algae Ground": false,
+                "Algae Source": false
+            },
+            "Auto": {
+                "Can": false,
+                "Scores": 0,
+                "Misses": 0,
+                "Ejects": 0
+            },
+            "Endgame": {
+                "Parking Status": 0,
+                "Time": 0.00
+            },
+            "Misc": {
+                "Lost Communication or Disabled": false,
+                "User Lost Track": false
+            },
+            "Penalties": [
+                "",
+            ],
+            "Rescouting": false,
+            "Prescouting": false,
+            "Notes": ""
+        }
+
+"/pitScout":
+    Input:
+        Header:
+            Certificate:
+        Body:
+            {
+                "Team": 1234,
+                "Match": {
+                    "Number": 0,
+                    "isReplay": false
+                },
+                "Scouter": "",
+                "Driver Station": {
+                    "Is Blue": false,
+                    "Number": 0
+                },
+                "Cycles": [
+                    {
+                        "Time": 0.00,
+                        "Type": "Coral",
+                        "Success": true
+                    },
+                    {
+                        "Time": 0.00,
+                        "Type": "",
+                        "Success": false
+                    }
+                ],
+                "Pickup Locations": {
+                    "Coral Ground": false,
+                    "Coral Source": false,
+                    "Algae Ground": false,
+                    "Algae Source": false
+                },
+                "Auto": {
+                    "Can": false,
+                    "Scores": 0,
+                    "Misses": 0,
+                    "Ejects": 0
+                },
+                "Endgame": {
+                    "Parking Status": 0,
+                    "Time": 0.00
+                },
+                "Misc": {
+                    "Lost Communication or Disabled": false,
+                    "User Lost Track": false
+                },
+                "Penalties": [
+                    "",
+                ],
+                "Rescouting": false,
+                "Prescouting": false,
+                "Notes": ""
+        }
+    Output: nothingburger
+
+"/singleSchedule": Handles serving the schedule for one scouter
+    Input: the name of the user you want to lookup
+    Output: the schedule of one scouter
+
+"/setDisplayName":
+    Input:
+        Header:
+            Certificate:
+            username:
+            uuid:
+            displayName: the new display name you want
+    Output:
+        {
+            "Username": "",
+            "DisplayName": "",
+            "Accolades": null,
+            "Badges": [
+                {
+                    "ID": "",
+                    "Description": ""
+                },
+            ],
+            "Score": 0,
+            "LifeScore": 0,
+            "HighScore": 0,
+            "Color": 0,
+            "Pfp": ""
+        }
+
+"/provideAdditions":
+    Input:
+        Header:
+            Certificate:
+            username:
+            uuid:
+        Body:
+             {
+                "UUID": ""
+                "Achievements": [
+                    ""
+                ],
+             }
+    Output: N/A
+
+"/setColor":
+    Input:
+        Header:
+            Certificate:
+            username:
+            uuid:
+            color:
+                "green" or "gold" orelse  Default
+    Output: N/A
+
+"/spreadsheet":
+    Input:
+        Header:
+            Certificate:
+    Output:
+        "https://docs.google.com/spreadsheets/d/" + CachedConfigs.SpreadSheetID
+
+"/addSchedule":
+    Input:
+        Header:
+            Certificate:
+            userInput:
+        Body: [dsoffset, starting, ending]
+            {
+                "Ranges": [
+                    [0, 0, 0],
+                ]
+            }
+    Output: nothingburger
+
+"/modScore":
+    Input:
+        Header:
+            Certificate:
+        Body:
+            {
+                "Name": "",
+                "By": 0,
+                "Mod": "" // "Increase" or "Decrease" or "Set"
+            }
+    Output: nothingburger
+
+"/allUsers":
+    Input:
+        Header:
+            Certificate:
+    Output:
+        [
+            {
+                "Name": "",
+                "UUID": ""
+            },
+        ]
+
+"/addBadge":
+    Input:
+        Header:
+            Certificate:
+            username:
+        Body:
+            {
+                "ID": "",
+                "Description": ""
+            }
+    Output: nothingburger
+
+"/badgeConfig": Handles requests to override all badges
+    Input:
+        Header:
+            Certificate:
+            username:
+        Body:
+            [
+                {
+                    "ID": "",
+                    "Description": ""
+                },
+            ]
+    Output: nothingburger
+
+"/keyChange":
+    Input:
+        Header:
+            Certificate:
+        Body: the key for the event
+    Output: nothingburger
+
+"/sheetChange":  Handles changing the google sheets id
+    Input:
+        Header:
+            Certificate:
+        Body: the new google sheets id
+    Output: nothingburger
