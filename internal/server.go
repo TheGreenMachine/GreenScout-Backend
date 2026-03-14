@@ -76,7 +76,7 @@ func iterativeServerCall() {
 
 			if !hadErrs {
 				if allMatching := GetAllMatching(file.Name()); CachedConfigs.UsingMultiScouting && len(allMatching) > 0 { // Multi-scouting
-					var entries []TeamData
+					var entries []TeamDataV2
 					entries = append(entries, team)
 					for _, foundFile := range allMatching {
 						if team.Rescouting { // If rescouting, discard other ones
@@ -148,9 +148,10 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/logout", handleWithCORS(handleLogoutRequest, false))
 
 	//Any Authentication
-	http.HandleFunc("/dataEntry", handleWithCORS(postJson, true))
+	http.HandleFunc("/dataEntry", handleWithCORS(postTeamData, true))
 	http.HandleFunc("/pitScout", handleWithCORS(postPitScout, true))
 	http.HandleFunc("/singleSchedule", handleWithCORS(serveScouterSchedule, true))
+	http.HandleFunc("/theme", handleWithCORS(serveTheme, false))
 
 	//Admin or curr user
 	http.HandleFunc("/setDisplayName", handleWithCORS(setDisplayName, true))
@@ -190,7 +191,7 @@ func handleRoot(writer http.ResponseWriter, request *http.Request) {
 }
 
 // Handles posting of scouting JSON to the server
-func postJson(writer http.ResponseWriter, request *http.Request) {
+func postTeamData(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromCookies(request) // Don't care about specific role for post, everyone that is auth'd can.
 	if !auth.Authed {
 		writer.WriteHeader(500)
@@ -203,7 +204,7 @@ func postJson(writer http.ResponseWriter, request *http.Request) {
 		LogErrorf(readErr, "Problem reading %v", request.Body)
 	}
 
-	var team TeamData
+	var team TeamDataV2
 	unmarshalErr := json.Unmarshal(requestBytes, &team)
 	team.Scouter = auth.Username // We shouldnt trust the client to send us the correct username
 
@@ -456,6 +457,19 @@ func serveScouterSchedule(writer http.ResponseWriter, request *http.Request) {
 	response := RetrieveSingleScouter(nameToLookup, false)
 
 	httpResponsef(writer, "Problem serving scouter schedule", "%s", response)
+}
+
+func serveTheme(writer http.ResponseWriter, request *http.Request) {
+	auth := getAuthFromCookies(request)
+	_ = auth
+
+	writer.Header().Set("Vary", "Cookie")
+	writer.Header().Set("Cache-Control", "private, max-age=0, must-revalidate")
+	writer.Header().Set("Content-Type", "text/css; charset=utf-8")
+
+	theme := "light" // getThemeFromCookies(auth.UUID) not implemented
+
+	http.ServeFile(writer, request, "run/themes/"+theme+".css")
 }
 
 // Handles adding schedules to a given scouter

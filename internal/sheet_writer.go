@@ -108,9 +108,9 @@ func SetupSheetsAPI(creds []byte) {
 }
 
 // Writes team data from multi-scouting to a specified line
-func WriteMultiScoutedTeamDataToLine(matchdata MultiMatch, row int, sources []TeamData) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(matchdata.CycleData.AllCycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(matchdata.CycleData.AllCycles)
+func WriteMultiScoutedTeamDataToLine(matchdata MultiMatch, row int, sources []TeamDataV2) bool { // TODO: FIX FOR NEW
+	// troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(matchdata.CycleData.AllCycles)
+	// troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(matchdata.CycleData.AllCycles)
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
@@ -119,29 +119,29 @@ func WriteMultiScoutedTeamDataToLine(matchdata MultiMatch, row int, sources []Te
 		matchdata.TeamNumber,
 		matchdata.CycleData.AvgCycleTime,
 		matchdata.CycleData.NumCycles,
-		math.Round(troughTendency*10000) / 100,       // L1/Trough tendency
-		troughAccuracy,                               // L1/Trough accuracy
-		math.Round(L2Tendency*10000) / 100,           // L2 Coral tendency
-		L2Accuracy,                                   // L2 Coral accuracy
-		math.Round(L3Tendency*10000) / 100,           // L3 Coral tendency
-		L3Accuracy,                                   // L3 Coral accuracy
-		math.Round(L4Tendency*10000) / 100,           // L4 Coral tendency
-		L4Accuracy,                                   // L4 Coral accuracy
-		math.Round(processorTendency*10000) / 100,    // Processor tendency
-		processorAccuracy,                            // Processor accuracy
-		math.Round(netTendency*10000) / 100,          // Net tendency
-		netAccuracy,                                  // Bet accuracy
-		math.Round(knockTendency*10000) / 100,        // Knock tendency
-		knockAccuracy,                                // Knock accuracy
-		math.Round(shuttleTendency*10000) / 100,      // Shuttle tendency
-		shuttleAccuracy,                              // Shuttle accuracy
-		GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns. -Leon
-		matchdata.Auto.Can,                           // Had Auto
-		matchdata.Auto.Scores,                        // Scores in auto
-		GetAutoAccuracy(matchdata.Auto),       // Auto accuracy
-		matchdata.Auto.Ejects,                        // Auto shuttles
+		// math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
+		// troughAccuracy,                            // L1/Trough accuracy
+		// math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
+		// L2Accuracy,                                // L2 Coral accuracy
+		// math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
+		// L3Accuracy,                                // L3 Coral accuracy
+		// math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
+		// L4Accuracy,                                // L4 Coral accuracy
+		// math.Round(processorTendency*10000) / 100, // Processor tendency
+		// processorAccuracy,                         // Processor accuracy
+		// math.Round(netTendency*10000) / 100,       // Net tendency
+		// netAccuracy,                               // Bet accuracy
+		// math.Round(knockTendency*10000) / 100,     // Knock tendency
+		// knockAccuracy,                             // Knock accuracy
+		// math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
+		// shuttleAccuracy,                           // Shuttle accuracy
+		// GetPickupLocations(matchdata.Pickups), // Pickup positions //TODO: Split into multiple diff columns. -Leon
+		matchdata.Auto.CanAuto,          // Had Auto
+		matchdata.Auto.Scores,           // Scores in auto
+		GetAutoAccuracy(matchdata.Auto), // Auto accuracy
+		matchdata.Auto.Ejects,           // Auto shuttles
 		//matchdata.Endgame.Time,                  // Climb Time TODO: implement this in multi soon -Leon
-		matchdata.Parked,                         // Parked
+		matchdata.Parked,                  // Parked
 		CompileNotes2(matchdata, sources), // Notes + Penalties + DC + Lost track
 	}
 
@@ -161,40 +161,40 @@ func WriteMultiScoutedTeamDataToLine(matchdata MultiMatch, row int, sources []Te
 }
 
 // Writes data from a single-scouted match to a line
-func WriteTeamDataToLine(teamData TeamData, row int) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(teamData.Cycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(teamData.Cycles)
+func WriteTeamDataToLine(teamData TeamDataV2, row int) bool { // TODO: FIX FOR NEW
+	// troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(teamData.Cycles)
+	// troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(teamData.Cycles)
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.Match.Number,                       // Match Number
-		teamData.TeamNumber,                         // Team Number
-		GetAvgCycleTime(teamData.Cycles),     // Avg cycle time
-		GetNumCycles(teamData.Cycles),        // Num Cycles
-		math.Round(troughTendency*10000) / 100,      // L1/Trough tendency
-		troughAccuracy,                              // L1/Trough accuracy
-		math.Round(L2Tendency*10000) / 100,          // L2 Coral tendency
-		L2Accuracy,                                  // L2 Coral accuracy
-		math.Round(L3Tendency*10000) / 100,          // L3 Coral tendency
-		L3Accuracy,                                  // L3 Coral accuracy
-		math.Round(L4Tendency*10000) / 100,          // L4 Coral tendency
-		L4Accuracy,                                  // L4 Coral accuracy
-		math.Round(processorTendency*10000) / 100,   // Processor tendency
-		processorAccuracy,                           // Processor accuracy
-		math.Round(knockTendency*10000) / 100,       // Knock tendency
-		knockAccuracy,                               // Knock accuracy
-		math.Round(netTendency*10000) / 100,         // Net tendency
-		netAccuracy,                                 // Net accuracy
-		math.Round(shuttleTendency*10000) / 100,     // Shuttle tendency
-		shuttleAccuracy,                             // Shuttle accuracy
-		GetPickupLocations(teamData.Pickups), // Pickup positions
-		teamData.Auto.Can,                           // Had Auto
-		teamData.Auto.Scores,                        // Scores in auto
-		GetAutoAccuracy(teamData.Auto),       // Auto accuracy
-		teamData.Auto.Ejects,                        // Auto shuttles
-		teamData.Endgame.Time,                       // Climb Time
-		GetParkStatus(teamData.Endgame),      // Parked
-		CompileNotes(teamData),               // Notes + Penalties + DC + Lost track
+		teamData.Match.Number,            // Match Number
+		teamData.TeamNumber,              // Team Number
+		GetAvgCycleTime(teamData.Cycles), // Avg cycle time
+		GetNumCycles(teamData.Cycles),    // Num Cycles
+		// math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
+		// troughAccuracy,                            // L1/Trough accuracy
+		// math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
+		// L2Accuracy,                                // L2 Coral accuracy
+		// math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
+		// L3Accuracy,                                // L3 Coral accuracy
+		// math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
+		// L4Accuracy,                                // L4 Coral accuracy
+		// math.Round(processorTendency*10000) / 100, // Processor tendency
+		// processorAccuracy,                         // Processor accuracy
+		// math.Round(knockTendency*10000) / 100,     // Knock tendency
+		// knockAccuracy,                             // Knock accuracy
+		// math.Round(netTendency*10000) / 100,       // Net tendency
+		// netAccuracy,                               // Net accuracy
+		// math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
+		// shuttleAccuracy,                           // Shuttle accuracy
+		// GetPickupLocations(teamData.Pickups), // Pickup positions
+		teamData.Auto.CanAuto,          // Had Auto
+		teamData.Auto.Scores,           // Scores in auto
+		GetAutoAccuracy(teamData.Auto), // Auto accuracy
+		teamData.Auto.Ejects,           // Auto shuttles
+		teamData.Endgame.ClimbTimer,    // Climb Time
+		// GetParkStatus(teamData.Endgame),      // Parked
+		CompileNotes(teamData), // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange
@@ -424,39 +424,40 @@ func WritePitDataToLine(pitData PitScoutingData, row int) bool {
 }
 
 // Writes data from a prescouted match to a line
-func WritePrescoutDataToLine(teamData TeamData, row int) bool {
-	troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(teamData.Cycles)
-	troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(teamData.Cycles)
+func WritePrescoutDataToLine(teamData TeamDataV2, row int) bool { // TODO: FIX FOR NEW
+	// troughTendency, L2Tendency, L3Tendency, L4Tendency, processorTendency, netTendency, knockTendency, shuttleTendency := GetCycleTendencies(teamData.Cycles)
+	// troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netAccuracy, knockAccuracy, shuttleAccuracy := GetCycleAccuracies(teamData.Cycles)
+
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.TeamNumber,                         // Team Number
-		GetAvgCycleTime(teamData.Cycles),     // Avg cycle time
-		GetNumCycles(teamData.Cycles),        // Num Cycles
-		math.Round(troughTendency*10000) / 100,      // L1/Trough tendency
-		troughAccuracy,                              // L1/Trough accuracy
-		math.Round(L2Tendency*10000) / 100,          // L2 Coral tendency
-		L2Accuracy,                                  // L2 Coral accuracy
-		math.Round(L3Tendency*10000) / 100,          // L3 Coral tendency
-		L3Accuracy,                                  // L3 Coral accuracy
-		math.Round(L4Tendency*10000) / 100,          // L4 Coral tendency
-		L4Accuracy,                                  // L4 Coral accuracy
-		math.Round(processorTendency*10000) / 100,   // Processor tendency
-		processorAccuracy,                           // Processor accuracy
-		math.Round(knockTendency*10000) / 100,       // Knock tendency
-		knockAccuracy,                               // Knock accuracy
-		math.Round(netTendency*10000) / 100,         // Net tendency
-		netAccuracy,                                 // Net accuracy
-		math.Round(shuttleTendency*10000) / 100,     // Shuttle tendency
-		shuttleAccuracy,                             // Shuttle accuracy
-		GetPickupLocations(teamData.Pickups), // Pickup positions
-		teamData.Auto.Can,                           // Had Auto
-		teamData.Auto.Scores,                        // Scores in auto
-		GetAutoAccuracy(teamData.Auto),       // Auto accuracy
-		teamData.Auto.Ejects,                        // Auto shuttles
-		teamData.Endgame.Time,                       // Climb Time
-		GetParkStatus(teamData.Endgame),      // Parked
-		CompileNotes(teamData),               // Notes + Penalties + DC + Lost track
+		teamData.TeamNumber,              // Team Number
+		GetAvgCycleTime(teamData.Cycles), // Avg cycle time
+		GetNumCycles(teamData.Cycles),    // Num Cycles
+		// math.Round(troughTendency*10000) / 100,    // L1/Trough tendency
+		// troughAccuracy,                            // L1/Trough accuracy
+		// math.Round(L2Tendency*10000) / 100,        // L2 Coral tendency
+		// L2Accuracy,                                // L2 Coral accuracy
+		// math.Round(L3Tendency*10000) / 100,        // L3 Coral tendency
+		// L3Accuracy,                                // L3 Coral accuracy
+		// math.Round(L4Tendency*10000) / 100,        // L4 Coral tendency
+		// L4Accuracy,                                // L4 Coral accuracy
+		// math.Round(processorTendency*10000) / 100, // Processor tendency
+		// processorAccuracy,                         // Processor accuracy
+		// math.Round(knockTendency*10000) / 100,     // Knock tendency
+		// knockAccuracy,                             // Knock accuracy
+		// math.Round(netTendency*10000) / 100,       // Net tendency
+		// netAccuracy,                               // Net accuracy
+		// math.Round(shuttleTendency*10000) / 100,   // Shuttle tendency
+		// shuttleAccuracy,                           // Shuttle accuracy
+		// GetPickupLocations(teamData.Pickups),      // Pickup positions
+		teamData.Auto.CanAuto,          // Had Auto
+		teamData.Auto.Scores,           // Scores in auto
+		GetAutoAccuracy(teamData.Auto), // Auto accuracy
+		teamData.Auto.Ejects,           // Auto shuttles
+		teamData.Endgame.ClimbTimer,    // Climb Time
+		// GetParkStatus(teamData.Endgame),           // Parked
+		CompileNotes(teamData), // Notes + Penalties + DC + Lost track
 	}
 
 	var vr sheets.ValueRange

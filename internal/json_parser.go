@@ -11,6 +11,110 @@ import (
 	"strings"
 )
 
+type TeamDataV2 struct {
+	TeamNumber    uint64            `json:"team"`
+	Match         MatchInfo         `json:"match"`
+	Scouter       string            `json:"scouter"`
+	DriverStation DriverStationData `json:"driverStation"`
+	Cycles        []Cycle           `json:"cycles"` // The cycle data
+
+	Auto    AutoDataV2    `json:"auto"`
+	Teleop  TeleopDataV2  `json:"teleop"`
+	Endgame EndgameDataV2 `json:"endgame"`
+	Issues  IssuesDataV2  `json:"issues"`
+	Notes   NotesDataV2   `json:"notes"`
+
+	Rescouting  bool `json:"rescouting"`
+	Prescouting bool `json:"prescouting"`
+}
+
+type AutoDataV2 struct {
+	CanAuto  bool `json:"canAuto"`
+	HangAuto bool `json:"hangAuto"`
+	Scores   int  `json:"scores"`
+	Misses   int  `json:"misses"`
+	Ejects   int  `json:"ejects"`
+	WonAuto  bool `json:"won"`
+
+	Accuracy AutoAccuracyV2 `json:"accuracy"`
+	Field    AutoFieldV2    `json:"field"`
+}
+
+type AutoAccuracyV2 struct {
+	HPAccuracy    int `json:"hpAccuracy"`
+	RobotAccuracy int `json:"robotAccuracy"`
+}
+
+type AutoFieldV2 struct {
+	Left       bool `json:"left"`
+	Right      bool `json:"right"`
+	Mid        bool `json:"mid"`
+	Top        bool `json:"top"`
+	Bump       bool `json:"bump"`
+	Trench     bool `json:"trench"`
+	DidntCross bool `json:"didntCross"`
+	HP         bool `json:"hp"`
+	Fuel       bool `json:"fuel"`
+}
+
+type TeleopDataV2 struct {
+	Collection CollectionDataV2 `json:"collection"`
+	Field      TeleFieldV2      `json:"field"`
+	BotType    string           `json:"botType"`
+	Playstyle  string           `json:"playstyle"`
+}
+
+type CollectionDataV2 struct {
+	CollectNeutral bool   `json:"collectNeutral"`
+	CollectHP      bool   `json:"collectHp"`
+	FuelCapacity   string `json:"fuelCapacity"`
+}
+
+type TeleFieldV2 struct {
+	Bump   bool `json:"bump"`
+	Trench bool `json:"trench"`
+}
+
+type EndgameDataV2 struct {
+	Park         string  `json:"park"`
+	ClimbTimer   float64 `json:"climbTimer"`
+	EndgameShoot bool    `json:"endgameShoot"`
+}
+
+type IssuesDataV2 struct {
+	Disconnect  bool `json:"disconnect"`
+	LoseTrack   bool `json:"loseTrack"`
+	EverBeached bool `json:"everBeached"`
+}
+
+type NotesDataV2 struct {
+	Perf     string `json:"perfNotes"`
+	Events   string `json:"eventsNotes"`
+	Comments string `json:"commentsNotes"`
+	Teleop   string `json:"teleNotes"`
+	Auto     string `json:"autoNotes"`
+}
+
+// Basic info about the driver station
+type DriverStationData struct {
+	IsBlue bool `json:"isBlue"` // If it is blue
+	Number int  `json:"number"` // The driverstation number (1-3)
+}
+
+// Basic info about the match
+type MatchInfo struct {
+	Number   uint `json:"number"`   // The match number
+	IsReplay bool `json:"isReplay"` // If it is a replay
+}
+
+// One cycle
+type Cycle struct {
+	Time     float64 `json:"time"`     // The time taken
+	Type     string  `json:"type"`     // The type of cycle
+	Accuracy float64 `json:"accuracy"` // The accuracy of the cycle. Will also be drove and shot for shuttles
+}
+
+/*
 // Data from one scouter from one match
 type TeamData struct {
 	TeamNumber    uint64            `json:"Team"`             // The team number
@@ -28,24 +132,7 @@ type TeamData struct {
 	Notes         string            `json:"Notes"`            // Notes from the scouter
 }
 
-// Basic info about the match
-type MatchInfo struct {
-	Number   uint `json:"Number"`   // The match number
-	IsReplay bool `json:"isReplay"` // If it is a replay
-}
 
-// Basic info about the driver station
-type DriverStationData struct {
-	IsBlue bool `json:"Is Blue"` // If it is blue
-	Number int  `json:"Number"`  // The driverstation number (1-3)
-}
-
-// One cycle
-type Cycle struct {
-	Time    float64 `json:"Time"`    // The time taken
-	Type    string  `json:"Type"`    // The type of cycle
-	Success bool    `json:"Success"` // If it was successful
-}
 
 // Where a robot could pick up from
 type PickupLocations struct {
@@ -73,11 +160,12 @@ type EndgameData struct {
 type MiscData struct {
 	DC        bool `json:"Lost Communication or Disabled"` // If the robot DC'd
 	LostTrack bool `json:"User Lost Track"`                // If the scouter lost track
-}
+	}
+*/
 
 // Parses through the file at the passed in location, returning a compiled TeamData object and wether or not there were errors.
 // Params: The filepath, if it has already been written (for multi-scouting)
-func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
+func Parse(file string, hasBeenWritten bool) (TeamDataV2, bool) {
 
 	var path string
 	if hasBeenWritten {
@@ -92,19 +180,19 @@ func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
 	// Handle any error opening the file
 	if fileErr != nil {
 		LogErrorf(fileErr, "Error opening JSON file %v", path)
-		return TeamData{}, true
+		return TeamDataV2{}, true
 	}
 
 	// defer file closing
 	defer jsonFile.Close()
 
-	var teamData TeamData
+	var teamData TeamDataV2
 
 	dataAsByte, readErr := io.ReadAll(jsonFile)
 
 	if readErr != nil {
 		LogErrorf(readErr, "Error reading JSON file %v", path)
-		return TeamData{}, true
+		return TeamDataV2{}, true
 	}
 
 	//Deocoding
@@ -113,7 +201,7 @@ func Parse(file string, hasBeenWritten bool) (TeamData, bool) {
 	//Deal with unmarshalling errors
 	if err != nil {
 		LogErrorf(err, "Error unmarshalling JSON data %v", string(dataAsByte))
-		return TeamData{}, true
+		return TeamDataV2{}, true
 	}
 
 	return teamData, false
@@ -160,7 +248,7 @@ func GetNameFromWritten(match MatchInfoRequest) string {
 			// defer file closing
 			defer jsonFile.Close()
 
-			var teamData TeamData
+			var teamData TeamDataV2
 
 			dataAsByte, readErr := io.ReadAll(jsonFile)
 
