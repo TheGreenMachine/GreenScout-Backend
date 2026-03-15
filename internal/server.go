@@ -76,7 +76,7 @@ func iterativeServerCall() {
 
 			if !hadErrs {
 				if allMatching := GetAllMatching(file.Name()); CachedConfigs.UsingMultiScouting && len(allMatching) > 0 { // Multi-scouting
-					var entries []TeamDataV2
+					var entries []TeamData
 					entries = append(entries, team)
 					for _, foundFile := range allMatching {
 						if team.Rescouting { // If rescouting, discard other ones
@@ -204,7 +204,7 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 		LogErrorf(readErr, "Problem reading %v", request.Body)
 	}
 
-	var team TeamDataV2
+	var team TeamData
 	unmarshalErr := json.Unmarshal(requestBytes, &team)
 	team.Scouter = auth.Username // We shouldnt trust the client to send us the correct username
 

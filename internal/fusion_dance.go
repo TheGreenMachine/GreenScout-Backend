@@ -17,9 +17,9 @@ type MultiMatch struct { // TODO: FIX FOR NEW
 	DriverStation DriverStationData  `json:"Driver Station"` // The driverstation of this entry
 	CycleData     CompositeCycleData // The compiled cycle data from multiple scouters
 	// Pickups       PickupLocations    // The compiled pickup locations from multiple scouters
-	Auto   AutoDataV2 // The compiled auto data from multiple scouters
-	Parked bool       // If any scouter recorded a park
-	Notes  []string   // The compiled notes from multiple scouters
+	Auto   AutoData // The compiled auto data from multiple scouters
+	Parked bool     // If any scouter recorded a park
+	Notes  []string // The compiled notes from multiple scouters
 }
 
 // Compiled scouting data from multiple scouters
@@ -31,7 +31,7 @@ type CompositeCycleData struct {
 }
 
 // Compiles Teamdata entries into one MultiMatch
-func CompileMultiMatch(entries ...TeamDataV2) MultiMatch { // TODO: FIX FOR NEW
+func CompileMultiMatch(entries ...TeamData) MultiMatch { // TODO: FIX FOR NEW
 	var finalData MultiMatch
 
 	// guy who uses c#: heh system.linq could this in 1/3 of the code
@@ -62,7 +62,7 @@ func CompileMultiMatch(entries ...TeamDataV2) MultiMatch { // TODO: FIX FOR NEW
 }
 
 // Compiles the team number of all entries passed in. Always returns the first team number, as well as wether or not there were any mismatches
-func compositeTeamNum(entries []TeamDataV2) (int, bool) {
+func compositeTeamNum(entries []TeamData) (int, bool) {
 	initial := entries[0].TeamNumber
 
 	for i := 1; i < len(entries); i++ {
@@ -75,7 +75,7 @@ func compositeTeamNum(entries []TeamDataV2) (int, bool) {
 }
 
 // Compiles the scouter names from all matches
-func compositeScouters(entries []TeamDataV2) string {
+func compositeScouters(entries []TeamData) string {
 	var finalScouter string
 	for _, entry := range entries {
 		finalScouter += fmt.Sprintf(", %s", entry.Scouter)
@@ -85,7 +85,7 @@ func compositeScouters(entries []TeamDataV2) string {
 }
 
 // Compiles the cycle data from all matches into one CompositeCycleData
-func compileCycles(entries []TeamDataV2) CompositeCycleData {
+func compileCycles(entries []TeamData) CompositeCycleData {
 	var finalCycles CompositeCycleData
 	var allNumCycles []int
 	for _, entry := range entries {
@@ -118,7 +118,7 @@ func compileCycles(entries []TeamDataV2) CompositeCycleData {
 
 // Averages out the cycle times from all entries, returning this average as well as if there were any times that were outside
 // of the configured acceptable range
-func avgCycleTimes(entries []TeamDataV2) (float64, bool) {
+func avgCycleTimes(entries []TeamData) (float64, bool) {
 	var sum float64
 	var count int = 0
 
@@ -175,7 +175,7 @@ func avgCycleTimes(entries []TeamDataV2) (float64, bool) {
 // }
 
 // Compiles autonomous data from all entries
-func compileAutoData(entries []TeamDataV2) AutoDataV2 {
+func compileAutoData(entries []TeamData) AutoData {
 	// No need to mess with return values if err, as the NaNs do that well enough.
 
 	var can bool = false
@@ -271,7 +271,7 @@ func compileAutoData(entries []TeamDataV2) AutoDataV2 {
 		LogErrorf(robotAccMeanErr, "Error finding mean of %v for all robot accuracy", allRobotAccuracy)
 	}
 
-	return AutoDataV2{
+	return AutoData{
 		CanAuto:  can,
 		HangAuto: hang,
 		Scores:   int(scoresAvgd),
@@ -279,11 +279,11 @@ func compileAutoData(entries []TeamDataV2) AutoDataV2 {
 		Ejects:   int(ejectsAvgd),
 		WonAuto:  won,
 
-		Accuracy: AutoAccuracyV2{
+		Accuracy: AutoAccuracy{
 			HPAccuracy:    int(hpAccAvgd),
 			RobotAccuracy: int(robotAccAvgd),
 		},
-		Field: AutoFieldV2{
+		Field: AutoField{
 			Left:       left,
 			Right:      right,
 			Mid:        mid,
@@ -310,7 +310,7 @@ func compileAutoData(entries []TeamDataV2) AutoDataV2 {
 // }
 
 // Combines the notes from all passed in scouters
-func compileNotes(entries []TeamDataV2, mismatches []string) []string {
+func compileNotes(entries []TeamData, mismatches []string) []string {
 	var finalNotes []string
 	for _, entry := range entries {
 		combined := fmt.Sprintf("%s; %s; %s; %s; %s", entry.Notes.Auto, entry.Notes.Teleop, entry.Notes.Perf, entry.Notes.Events, entry.Notes.Comments)
