@@ -51,11 +51,6 @@ RUN set -x && (type -p wget >/dev/null || (apt update && apt-get install wget -y
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/gs-backend /app/gs-backend
 COPY scripts/*.py entrypoint.sh /app/
-# Copy the Debiannary from the builder
-#COPY --from=builder /app/gs-backend /app/gs-backend
-
-# Copy scripts directly from your repo context
-#COPY *.py entrypoint.sh /app/
 
 WORKDIR /app
 RUN chmod u+x /app/*.py && chmod u+x /app/entrypoint.sh && \
