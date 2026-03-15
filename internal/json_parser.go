@@ -11,68 +11,107 @@ import (
 	"strings"
 )
 
-// Data from one scouter from one match
 type TeamData struct {
-	TeamNumber    uint64            `json:"Team"`             // The team number
-	Match         MatchInfo         `json:"Match"`            // The match number
-	Scouter       string            `json:"Scouter"`          // The scouter who recorded this data
-	DriverStation DriverStationData `json:"Driver Station"`   // The driver station
-	Cycles        []Cycle           `json:"Cycles"`           // The cycle data
-	Pickups       PickupLocations   `json:"Pickup Locations"` // The recorded speaker locations
-	Auto          AutoData          `json:"Auto"`             // The autonomous data           // The recorded trap data
-	Endgame       EndgameData       `json:"Endgame"`          // The recorded endgame data
-	Misc          MiscData          `json:"Misc"`             // Miscellaneous data
-	Penalties     []string          `json:"Penalties"`        // Recorded penalties
-	Rescouting    bool              `json:"Rescouting"`       // If this match is rescouting (Will override all previous data of this match with this driverstation)
-	Prescouting   bool              `json:"Prescouting"`      // If this match is prescouting (removes match req for saving)
-	Notes         string            `json:"Notes"`            // Notes from the scouter
+	TeamNumber    uint64            `json:"team"`
+	Match         MatchInfo         `json:"match"`
+	Scouter       string            `json:"scouter"`
+	DriverStation DriverStationData `json:"driverStation"`
+	Cycles        []Cycle           `json:"cycles"` // The cycle data
+
+	Auto    AutoData    `json:"auto"`
+	Teleop  TeleopData  `json:"teleop"`
+	Endgame EndgameData `json:"endgame"`
+	Issues  IssuesData  `json:"issues"`
+	Notes   NotesData   `json:"notes"`
+
+	Rescouting  bool `json:"rescouting"`
+	Prescouting bool `json:"prescouting"`
 }
 
-// Basic info about the match
-type MatchInfo struct {
-	Number   uint `json:"Number"`   // The match number
-	IsReplay bool `json:"isReplay"` // If it is a replay
+type AutoData struct {
+	CanAuto  bool `json:"canAuto"`
+	HangAuto bool `json:"hangAuto"`
+	Scores   int  `json:"scores"`
+	Misses   int  `json:"misses"`
+	Ejects   int  `json:"ejects"`
+	WonAuto  bool `json:"won"`
+
+	Accuracy AutoAccuracy `json:"accuracy"`
+	Field    AutoField    `json:"field"`
+}
+
+type AutoAccuracy struct {
+	HPAccuracy    int `json:"hpAccuracy"`
+	RobotAccuracy int `json:"robotAccuracy"`
+}
+
+type AutoField struct {
+	Left       bool `json:"left"`
+	Right      bool `json:"right"`
+	Mid        bool `json:"mid"`
+	Top        bool `json:"top"`
+	Bump       bool `json:"bump"`
+	Trench     bool `json:"trench"`
+	DidntCross bool `json:"didntCross"`
+	HP         bool `json:"hp"`
+	Fuel       bool `json:"fuel"`
+}
+
+type TeleopData struct {
+	Collection CollectionData `json:"collection"`
+	Field      TeleField      `json:"field"`
+	BotType    string         `json:"botType"`
+	Playstyle  string         `json:"playstyle"`
+}
+
+type CollectionData struct {
+	CollectNeutral bool   `json:"collectNeutral"`
+	CollectHP      bool   `json:"collectHp"`
+	FuelCapacity   string `json:"fuelCapacity"`
+}
+
+type TeleField struct {
+	Bump   bool `json:"bump"`
+	Trench bool `json:"trench"`
+}
+
+type EndgameData struct {
+	Park         string  `json:"park"`
+	ClimbTimer   float64 `json:"climbTimer"`
+	EndgameShoot bool    `json:"endgameShoot"`
+}
+
+type IssuesData struct {
+	Disconnect  bool `json:"disconnect"`
+	LoseTrack   bool `json:"loseTrack"`
+	EverBeached bool `json:"everBeached"`
+}
+
+type NotesData struct {
+	Perf     string `json:"perfNotes"`
+	Events   string `json:"eventsNotes"`
+	Comments string `json:"commentsNotes"`
+	Teleop   string `json:"teleNotes"`
+	Auto     string `json:"autoNotes"`
 }
 
 // Basic info about the driver station
 type DriverStationData struct {
-	IsBlue bool `json:"Is Blue"` // If it is blue
-	Number int  `json:"Number"`  // The driverstation number (1-3)
+	IsBlue bool `json:"isBlue"` // If it is blue
+	Number int  `json:"number"` // The driverstation number (1-3)
+}
+
+// Basic info about the match
+type MatchInfo struct {
+	Number   uint `json:"number"`   // The match number
+	IsReplay bool `json:"isReplay"` // If it is a replay
 }
 
 // One cycle
 type Cycle struct {
-	Time    float64 `json:"Time"`    // The time taken
-	Type    string  `json:"Type"`    // The type of cycle
-	Success bool    `json:"Success"` // If it was successful
-}
-
-// Where a robot could pick up from
-type PickupLocations struct {
-	CoralGround bool `json:"Coral Ground"` // If it could pick up from the ground
-	CoralSource bool `json:"Coral Source"` // If it could pick up from the source
-	AlgaeGround bool `json:"Algae Ground"` // If it could pick up from the ground
-	AlgaeSource bool `json:"Algae Source"` // If it could pick up from the source
-}
-
-// Data from the autonomous period
-type AutoData struct {
-	Can    bool `json:"Can"`    // If the robot has/can do autonomous
-	Scores int  `json:"Scores"` // The scores in auto
-	Misses int  `json:"Misses"` // The misses in auto
-	Ejects int  `json:"Ejects"` // The ejects/shuttles in auto
-}
-
-// Data about a robot's performance during parking, currently just for parking atm
-type EndgameData struct {
-	ParkStatus int     `json:"Parking Status"` // What the robot at the end of the game (i.e. did it park, did it climb, etc)
-	Time       float64 `json:"Time"`           // How long it took to climb
-}
-
-// Miscellaneous robot data
-type MiscData struct {
-	DC        bool `json:"Lost Communication or Disabled"` // If the robot DC'd
-	LostTrack bool `json:"User Lost Track"`                // If the scouter lost track
+	Time     float64 `json:"time"`     // The time taken
+	Type     string  `json:"type"`     // The type of cycle
+	Accuracy float64 `json:"accuracy"` // The accuracy of the cycle. Will also be drove and shot for shuttles
 }
 
 // Parses through the file at the passed in location, returning a compiled TeamData object and wether or not there were errors.

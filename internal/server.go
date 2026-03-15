@@ -148,9 +148,10 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/logout", handleWithCORS(handleLogoutRequest, false))
 
 	//Any Authentication
-	http.HandleFunc("/dataEntry", handleWithCORS(postJson, true))
+	http.HandleFunc("/dataEntry", handleWithCORS(postTeamData, true))
 	http.HandleFunc("/pitScout", handleWithCORS(postPitScout, true))
 	http.HandleFunc("/singleSchedule", handleWithCORS(serveScouterSchedule, true))
+	http.HandleFunc("/theme", handleWithCORS(serveTheme, false))
 
 	//Admin or curr user
 	http.HandleFunc("/setDisplayName", handleWithCORS(setDisplayName, true))
@@ -190,64 +191,60 @@ func handleRoot(writer http.ResponseWriter, request *http.Request) {
 }
 
 // Handles posting of scouting JSON to the server
-func postJson(writer http.ResponseWriter, request *http.Request) {
+func postTeamData(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromCookies(request) // Don't care about specific role for post, everyone that is auth'd can.
-
-	if auth.Authed {
-		requestBytes, readErr := io.ReadAll(request.Body)
-
-		if readErr != nil {
-			LogErrorf(readErr, "Problem reading %v", request.Body)
-		}
-
-		var team TeamData
-		unmarshalErr := json.Unmarshal(requestBytes, &team)
-
-		if unmarshalErr != nil { // Handle mangling
-			LogErrorf(unmarshalErr, "MANGLED: %v", requestBytes)
-
-			newFileName := filepath.Join(JsonMangledDirectory, time.Now().String()+".json")
-			mangledFile, openErr := OpenWithPermissions(newFileName)
-			if openErr != nil {
-				LogErrorf(openErr, "Problem creating %v", newFileName)
-			}
-
-			defer mangledFile.Close()
-
-			writer.WriteHeader(500)
-
-			httpResponsef(writer, "Problem writing http response to Mangled JSON", ":(")
-		} else { // Handle successful unmarshalling
-			//EVENT_MATCH_{COLOR}{DSNUM}_SystemTimeMS
-			//TODO: file naming stuff here -Leon
-			fileName := fmt.Sprintf(
-				"%s_%v_%s_%v",
-				GetCurrentEvent(),
-				team.Match.Number,
-				GetDSString(team.DriverStation.IsBlue, uint(team.DriverStation.Number)),
-				time.Now().UnixMilli(),
-			)
-
-			file, openErr := OpenWithPermissions(filepath.Join(JsonInDirectory, fileName+".json"))
-			if openErr != nil {
-				LogErrorf(openErr, "Problem creating %v", filepath.Join(JsonInDirectory, fileName+".json"))
-			}
-			defer file.Close()
-
-			encodeErr := json.NewEncoder(file).Encode(&team)
-			if encodeErr != nil {
-				LogErrorf(encodeErr, "Problem encoding %v", team)
-			}
-
-			if request.Header.Get("joshtown") == "tumble" { //This was used for testing during 2024 GCR. It also used to be more crudely worded.
-				writer.WriteHeader(500)
-			}
-
-			httpResponsef(writer, "Problem writing http response to JSON post request", "Processed %v\n", fileName)
-		}
-	} else {
+	if !auth.Authed {
 		writer.WriteHeader(500)
 		httpResponsef(writer, "Problem writing http response to JSON post request with insufficient authentication", "Not authenticated :(")
+		return
+	}
+
+	requestBytes, readErr := io.ReadAll(request.Body)
+	if readErr != nil {
+		LogErrorf(readErr, "Problem reading %v", request.Body)
+	}
+
+	var team TeamData
+	unmarshalErr := json.Unmarshal(requestBytes, &team)
+	team.Scouter = auth.Username // We shouldnt trust the client to send us the correct username
+
+	if unmarshalErr != nil { // Handle mangling
+		LogErrorf(unmarshalErr, "MANGLED: %v", requestBytes)
+
+		newFileName := filepath.Join(JsonMangledDirectory, time.Now().String()+".json")
+		mangledFile, openErr := OpenWithPermissions(newFileName)
+		if openErr != nil {
+			LogErrorf(openErr, "Problem creating %v", newFileName)
+		}
+
+		defer mangledFile.Close()
+
+		writer.WriteHeader(500)
+
+		httpResponsef(writer, "Problem writing http response to Mangled JSON", ":(")
+	} else { // Handle successful unmarshalling
+		//EVENT_MATCH_{COLOR}{DSNUM}_SystemTimeMS
+		//TODO: file naming stuff here -Leon
+		fileName := fmt.Sprintf(
+			"%s_%v_%s_%v",
+			GetCurrentEvent(),
+			team.Match.Number,
+			GetDSString(team.DriverStation.IsBlue, uint(team.DriverStation.Number)),
+			time.Now().UnixMilli(),
+		)
+
+		file, openErr := OpenWithPermissions(filepath.Join(JsonInDirectory, fileName+".json"))
+		if openErr != nil {
+			LogErrorf(openErr, "Problem creating %v", filepath.Join(JsonInDirectory, fileName+".json"))
+		}
+		defer file.Close()
+
+		encodeErr := json.NewEncoder(file).Encode(&team)
+		if encodeErr != nil {
+			LogErrorf(encodeErr, "Problem encoding %v", team)
+		}
+
+		httpResponsef(writer, "Problem writing http response to JSON post request", "Processed %v\n", fileName)
 	}
 }
 
@@ -460,6 +457,19 @@ func serveScouterSchedule(writer http.ResponseWriter, request *http.Request) {
 	response := RetrieveSingleScouter(nameToLookup, false)
 
 	httpResponsef(writer, "Problem serving scouter schedule", "%s", response)
+}
+
+func serveTheme(writer http.ResponseWriter, request *http.Request) {
+	auth := getAuthFromCookies(request)
+	_ = auth
+
+	writer.Header().Set("Vary", "Cookie")
+	writer.Header().Set("Cache-Control", "private, max-age=0, must-revalidate")
+	writer.Header().Set("Content-Type", "text/css; charset=utf-8")
+
+	theme := "light" // getThemeFromCookies(auth.UUID) not implemented
+
+	http.ServeFile(writer, request, "run/themes/"+theme+".css")
 }
 
 // Handles adding schedules to a given scouter
@@ -814,6 +824,7 @@ func httpResponsef(writer http.ResponseWriter, errDescription string, message st
 type RequestAuth struct {
 	UUID        string
 	Certificate string
+	Username    string
 	Role        string
 	Authed      bool
 }
@@ -834,8 +845,9 @@ func getAuthFromCookies(request *http.Request) RequestAuth {
 	}
 
 	role, ok := VerifyCertificate(auth.Certificate)
+	auth.Username = UUIDToUser(auth.UUID)
 	auth.Role = role
-	auth.Authed = ok
+	auth.Authed = ok && auth.Username != ""
 
 	return auth
 }
