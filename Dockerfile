@@ -50,7 +50,7 @@ RUN set -x && (type -p wget >/dev/null || (apt update && apt-get install wget -y
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/gs-backend /app/gs-backend
-COPY --from=builder /app/*.py /app/entrypoint.sh /app/
+COPY scripts/*.py entrypoint.sh /app/
 
 WORKDIR /app
 RUN chmod u+x /app/*.py && chmod u+x /app/entrypoint.sh && \
