@@ -17,7 +17,6 @@ Thumbs.db
 
 # Other #
 ######################
-*.json
 *.pem
 *.txt
 *.swp
