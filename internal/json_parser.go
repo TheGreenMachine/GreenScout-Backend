@@ -112,6 +112,7 @@ type Cycle struct {
 	Time     float64 `json:"time"`     // The time taken
 	Type     string  `json:"type"`     // The type of cycle
 	Accuracy float64 `json:"accuracy"` // The accuracy of the cycle. Will also be drove and shot for shuttles
+	ActiveHub string `json:"activeHub"`
 }
 
 // Parses through the file at the passed in location, returning a compiled TeamData object and wether or not there were errors.
