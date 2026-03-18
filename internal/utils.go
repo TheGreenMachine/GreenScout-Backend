@@ -22,6 +22,19 @@ func GetReplayString(isReplay bool) string {
 	return ""
 }
 
+func GetStyleString(tele TeleopData) string {
+	var out string
+
+	if tele.BotType != "Select" {
+		out += tele.BotType + "; "
+	}
+	if tele.Playstyle != "Select" {
+		out += tele.Playstyle
+	}
+
+	return out
+}
+
 // Utility to check if a given array of cycles is valid for writing
 func cyclesAreValid(cycles []Cycle) bool {
 	return len(cycles) > 0 && cycles[0].Type != "None"
@@ -34,6 +47,35 @@ func GetNumCycles(cycles []Cycle) int {
 	}
 
 	return 0
+}
+
+func GetTeleopCoverage(tele TeleField) string {
+	// type TeleFieldV2 struct {
+	// 	Bump   bool `json:"bump"`
+	// 	Trench bool `json:"trench"`
+	// }
+
+	var out string
+
+	if tele.Bump {
+		out += "Over Bump; "
+	} else if tele.Trench {
+		out += "Under Trench"
+	}
+
+	return out
+}
+
+func GetCollection(data CollectionData) string {
+	if data.CollectHP && data.CollectNeutral {
+		return "HP & Neutral"
+	} else if data.CollectHP {
+		return "HP"
+	} else if data.CollectNeutral {
+		return "Neutral"
+	}
+
+	return ""
 }
 
 // Gets the average cycle time from an array of cycles, returning N/A if cycles are invalid
@@ -53,239 +95,20 @@ func GetAvgCycleTimeExclusive(cycles []Cycle) float64 {
 	return 0
 }
 
-// Calculates the total accuracy of the passed in array of cycles, returning N/A if they are invalid.
+// Calculates the average accuracy of the passed in array of cycles, returning N/A if they are invalid.
 func GetCycleAccuracy(cycles []Cycle) any {
 	if cyclesAreValid(cycles) {
-		shotsMade := 0
+		totalAccuracy := 0.0
 		for _, cycle := range cycles {
-			if cycle.Success {
-				shotsMade++
-			}
+			totalAccuracy += cycle.Accuracy
 		}
-		return (float64(shotsMade) / float64(len(cycles))) * 100
+		return (float64(totalAccuracy) / float64(len(cycles))) * 100
 	}
 	return "N/A"
 }
 
-// Calculates the tendencies of amp, speaker, shuttling, and distance shooting from an array of cycles.
-// Returns: Tendency to AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleTendencies(cycles []Cycle) (float64, float64, float64, float64, float64, float64, float64, float64) {
-	if len(cycles) < 1 {
-		return 0, 0, 0, 0, 0, 0, 0, 0
-	}
-
-	var numTrough float64
-	var numL2 float64
-	var numL3 float64
-	var numL4 float64
-	var numProcessors float64
-	var numNets float64
-	var numKnocks float64
-	var numShuttles float64
-
-	numCycles := len(cycles)
-
-	for _, cycle := range cycles {
-		switch cycle.Type {
-		case "Trough/Coral Level 1":
-			numTrough++
-		case "Coral Level 2":
-			numL2++
-		case "Coral Level 3":
-			numL3++
-		case "Coral Level 4":
-			numL4++
-		case "Processor":
-			numProcessors++
-		case "Knock":
-			numKnocks++
-		case "Net":
-			numNets++
-		case "Shuttle":
-			numShuttles++
-		}
-	}
-
-	return numTrough / float64(numCycles),
-		numL2 / float64(numCycles),
-		numL3 / float64(numCycles),
-		numL4 / float64(numCycles),
-		numProcessors / float64(numCycles),
-		numNets / float64(numCycles),
-		numKnocks / float64(numCycles),
-		numShuttles / float64(numCycles)
-}
-func GetAlgaePosAsString(positions AlgaeData) string {
-	if positions.L2 && positions.L3 {
-		return "BOTH"
-	}
-
-	if positions.L2 {
-		return "A1/L2"
-	} else if positions.L3 {
-		return "A2/L3"
-	} else {
-		return "NONE"
-	}
-}
-func GetCoralPosAsString(positions CoralData) string {
-	var result []string
-	if positions.L1 {
-		result = append(result, "L1")
-	}
-	if positions.L2 {
-		result = append(result, "L2")
-	}
-	if positions.L3 {
-		result = append(result, "L3")
-	}
-	if positions.L4 {
-		result = append(result, "L4")
-	}
-	if len(result) == 0 {
-		return "NONE"
-	}
-	return strings.Join(result, ", ")
-}
-
-// Calculates the accuracies of amp, speaker, shuttling, and distance shooting from an array of cycles, returning N/A for any that had 0 attempts.
-// Returns: Accuracy of AMP, SPEAKER, DISTANCE, SHUTTLE
-func GetCycleAccuracies(cycles []Cycle) (any, any, any, any, any, any, any, any) {
-	if cyclesAreValid(cycles) {
-		troughAttempted, troughMade := 0, 0
-		L2Attempted, L2Made := 0, 0
-		L3Attempted, L3Made := 0, 0
-		L4Attempted, L4Made := 0, 0
-		processorsAttempted, processorsMade := 0, 0
-		netsAttempted, netsMade := 0, 0
-		knocksAttempted, knocksMade := 0, 0
-		shuttlesAttempted, shuttlesMade := 0, 0
-
-		for _, cycle := range cycles {
-			switch cycle.Type {
-			case "Trough/Coral Level 1":
-				{
-					troughAttempted++
-					if cycle.Success {
-						troughMade++
-					}
-				}
-			case "Coral Level 2":
-				{
-					L2Attempted++
-					if cycle.Success {
-						L2Made++
-					}
-				}
-			case "Coral Level 3":
-				{
-					L3Attempted++
-					if cycle.Success {
-						L3Made++
-					}
-				}
-			case "Coral Level 4":
-				{
-					L4Attempted++
-					if cycle.Success {
-						L4Made++
-					}
-				}
-			case "Processor":
-				{
-					processorsAttempted++
-					if cycle.Success {
-						processorsMade++
-					}
-				}
-			case "Net":
-				{
-					netsAttempted++
-					if cycle.Success {
-						netsMade++
-					}
-				}
-			case "Knock":
-				{
-					knocksAttempted++
-					if cycle.Success {
-						knocksMade++
-					}
-				}
-			case "Shuttle":
-				{
-					shuttlesAttempted++
-					if cycle.Success {
-						shuttlesMade++
-					}
-				}
-			}
-		}
-
-		var troughAccuracy any
-		var L2Accuracy any
-		var L3Accuracy any
-		var L4Accuracy any
-		var processorAccuracy any
-		var netsAccuracy any
-		var shuttleAccuracy any
-		var knockAccuracy any
-
-		if troughAttempted == 0 {
-			troughAccuracy = "N/A"
-		} else {
-			troughAccuracy = (float64(troughMade) / float64(troughAttempted)) * 100
-		}
-
-		if L2Attempted == 0 {
-			L2Accuracy = "N/A"
-		} else {
-			L2Accuracy = (float64(L2Made) / float64(L2Attempted)) * 100
-		}
-
-		if L3Attempted == 0 {
-			L3Accuracy = "N/A"
-		} else {
-			L3Accuracy = (float64(L3Made) / float64(L3Attempted)) * 100
-		}
-
-		if L4Attempted == 0 {
-			L4Accuracy = "N/A"
-		} else {
-			L4Accuracy = (float64(L4Made) / float64(L4Attempted)) * 100
-		}
-
-		if processorsAttempted == 0 {
-			processorAccuracy = "N/A"
-		} else {
-			processorAccuracy = (float64(processorsMade) / float64(processorsAttempted)) * 100
-		}
-
-		if netsAttempted == 0 {
-			netsAccuracy = "N/A"
-		} else {
-			netsAccuracy = (float64(netsMade) / float64(netsAttempted)) * 100
-		}
-
-		if knocksAttempted == 0 {
-			knockAccuracy = "N/A"
-		} else {
-			knockAccuracy = (float64(knocksMade) / float64(knocksAttempted)) * 100
-		}
-
-		if shuttlesAttempted == 0 {
-			shuttleAccuracy = "N/A"
-		} else {
-			shuttleAccuracy = (float64(shuttlesMade) / float64(shuttlesAttempted)) * 100
-		}
-
-		return troughAccuracy, L2Accuracy, L3Accuracy, L4Accuracy, processorAccuracy, netsAccuracy, knockAccuracy, shuttleAccuracy
-	}
-	return "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/a"
-}
-
 // Gets the accuracy of a robot during an autonomous period, returning N/A if 0 attempts were made
-func GetAutoAccuracy(auto AutoData) any {
+func GetAutoAccuracy(auto AutoData) any { // TODO: FIX FOR NEW
 	attempts := auto.Scores + auto.Misses
 
 	if attempts == 0 {
@@ -293,21 +116,34 @@ func GetAutoAccuracy(auto AutoData) any {
 	}
 	return (float64(auto.Scores) / float64(attempts)) * 100
 }
+
 func CompileNotes(team TeamData) string {
 	var finalNote string = ""
-	if team.Misc.LostTrack {
+
+	if team.Teleop.BotType != "" {
+		finalNote += team.Teleop.Playstyle
+	}
+	if team.Teleop.Playstyle != "" {
+		finalNote += team.Teleop.Playstyle
+	}
+
+	if team.Issues.LoseTrack {
 		finalNote += "LOST TRACK; "
 	}
 
-	if team.Misc.DC {
+	if team.Issues.Disconnect {
 		finalNote += "DISCONNECTED; "
 	}
 
-	if len(team.Penalties) > 0 {
-		finalNote += "PENALTIES= " + strings.Join(team.Penalties, ",") + "; "
+	if team.Issues.EverBeached {
+		finalNote += "WAS BEACHED; "
 	}
 
-	finalNote += team.Notes
+	finalNote += team.Notes.Auto + "; "
+	finalNote += team.Notes.Teleop + "; "
+	finalNote += team.Notes.Perf + "; "
+	finalNote += team.Notes.Events + "; "
+	finalNote += team.Notes.Comments
 	return finalNote
 }
 
@@ -319,11 +155,11 @@ func CompileNotes2(match MultiMatch, teams []TeamData) string {
 	var DC bool = false
 
 	for _, entry := range teams {
-		if entry.Misc.LostTrack {
+		if entry.Issues.LoseTrack {
 			lostTrack = true
 		}
 
-		if entry.Misc.DC {
+		if entry.Issues.Disconnect {
 			DC = true
 		}
 	}
@@ -337,6 +173,47 @@ func CompileNotes2(match MultiMatch, teams []TeamData) string {
 	}
 
 	finalNote += strings.Join(match.Notes, "; ")
+	return finalNote
+}
+
+func TurnAutoFieldIntoAnAwesomeAndReadableString(autoField AutoField) string {
+	var finalNote string = ""
+
+	if autoField.Left {
+		finalNote += "Left of field; "
+	}
+
+	if autoField.Mid {
+		finalNote += "Middle of field; "
+	}
+
+	if autoField.Right {
+		finalNote += "Right of field; "
+	}
+
+	if autoField.Top {
+		finalNote += "Top of field; "
+	}
+	if autoField.Bump {
+		finalNote += "Over Bump; "
+	}
+
+	if autoField.Trench {
+		finalNote += "Under Trench; "
+	}
+
+	if autoField.DidntCross {
+		finalNote += "Didn't Cross; "
+	}
+
+	if autoField.HP {
+		finalNote += "HP Station; "
+	}
+
+	if autoField.Fuel {
+		finalNote += "Fuel Station; "
+	}
+
 	return finalNote
 }
 
@@ -416,46 +293,6 @@ func WriteEventsToFile(configs GeneralConfigs) {
 	}
 }
 
-// Calculates the string from a PickupLocations object
-func GetPickupLocations(locations PickupLocations) string {
-	var rv string = ""
-
-	if locations.AlgaeGround &&
-		locations.AlgaeSource &&
-		locations.CoralGround &&
-		locations.CoralSource {
-		return "ALL TRUE"
-	}
-
-	if locations.AlgaeGround && locations.AlgaeSource {
-		rv += "BOTH ALGAE;"
-	}
-	if locations.CoralGround && locations.CoralSource {
-		rv += "BOTH CORAL;"
-	}
-
-	if locations.AlgaeGround {
-		rv += "ALGAE GROUND;"
-	}
-
-	if locations.CoralSource {
-		rv += "CORAL SOURCE;"
-	}
-
-	if locations.CoralGround {
-		rv += "CORAL GROUND;"
-	}
-
-	if !locations.AlgaeGround &&
-		!locations.AlgaeSource &&
-		!locations.CoralGround &&
-		!locations.CoralSource {
-		return "NO PICKUP"
-	}
-
-	return rv
-}
-
 // Calculates the string from data pertaining to a driverstation
 func GetDSString(isBlue bool, number uint) string {
 	var builder string = ""
@@ -500,25 +337,6 @@ func GetRow(team TeamData) int { //TODO: Update so it doesn't rely on match # -L
 	startRow += uint(dsOffset)
 
 	return int(startRow)
-}
-
-// Gets the parking status of the robot
-func GetParkStatus(data EndgameData) any {
-
-	if data.ParkStatus == 1 {
-		return "Failed Attempted to Park"
-	} else if data.ParkStatus == 2 {
-		return "Failed Attempted Shallow Climb"
-	} else if data.ParkStatus == 3 {
-		return "Failed Attempted Deep Climb"
-	} else if data.ParkStatus == 4 {
-		return "Parked in the Barge"
-	} else if data.ParkStatus == 5 {
-		return "Climbed Shallow Cage"
-	} else if data.ParkStatus == 6 {
-		return "Climbed Deep Cage"
-	}
-	return "Didn't Attempt to Park"
 }
 
 // Gets the row a pit scouting data should write to
