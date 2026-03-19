@@ -50,6 +50,7 @@ name: Build and Deploy to Cloud Run with KRM
 
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
