@@ -87,7 +87,7 @@ spec:
           {{- end }}
           {{- if .Values.databaces.enabled }}
           - name: databaces
-            mountPath: "/run/GreenScout-Databases"
+            mountPath: "/app/run/GreenScout-Databases"
             subPath: {{ .Values.databaces.existingClaim | default "databaces" }}
             readOnly: true
           {{- end }}
