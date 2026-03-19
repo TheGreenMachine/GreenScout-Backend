@@ -3,10 +3,10 @@ entries:
   greenscout-backend:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2026-03-19T15:27:46.035304104Z"
+    created: "2026-03-19T17:39:16.484682104Z"
     description: A Helm chart for the GreenScout backend application, a self-hosted
       scouting solution for FRC teams.
-    digest: d8c9669b690b3db56f9f46f6cc6da8b04661da8cf8ed1efa76035bb48feecc14
+    digest: 9309995ec87e02fb9e38bfec7a8eee41f19643a91b1a9c38cbbe19c94cd97ad0
     home: https://github.com/TheGreenMachine/GreenScout-Backend
     icon: https://avatars.githubusercontent.com/u/931344?s=200&v=4
     keywords:
@@ -21,4 +21,4 @@ entries:
     urls:
     - https://TheGreenMachine.github.io/GreenScout-Backend/greenscout-backend-0.0.1.tgz
     version: 0.0.1
-generated: "2026-03-19T15:27:46.034121716Z"
+generated: "2026-03-19T17:39:16.48352431Z"
