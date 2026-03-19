@@ -130,7 +130,7 @@ func userInSchedule(database *sql.DB, uuid string) bool {
 
 // Wipes the json file
 func WipeSchedule() {
-	schedPath := filepath.Join(CachedConfigs.RuntimeDirectory, "json")
+	schedPath := filepath.Join(CachedConfigs.RuntimeDirectory, "schedule.json")
 	file, openErr := OpenWithPermissions(schedPath)
 
 	if openErr != nil {
