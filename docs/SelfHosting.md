@@ -6,3 +6,6 @@ I (Landon) virtualise all of my kuberneties nodes, at the time i was deploying t
 
 # Where do i get the Images?
 U(points at u) future me.. will have to push a docker image to docker hub or your own docker registry and then use that with a helm chart. I use Artifact hub to publish my completed charts so that i can pull them into my argo cd infrastructure
+
+# the helm repo
+the helm chart repo is hosted on a github page evrytime you want to update the charts plese update the vershion number and push to main thanks
