@@ -61,38 +61,24 @@ spec:
               port: http
           
           volumeMounts:
-          {{- if .Values.secrets.enabled }}
           - name: secrets
-            mountPath: "/run/credentials.json"
+            mountPath: "/app/run/credentials.json"
             subPath: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
             readOnly: true
           - name: secrets
-            mountPath: "/conf/credentials.json"
+            mountPath: "/app/conf/credentials.json"
             subPath: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
             readOnly: true
           - name: secrets
-            mountPath: "/greenscout.config.yaml"
+            mountPath: "/app/conf/greenscout.config.yaml"
             subPath: {{ .Values.secrets.configsKey | default "greenscout.config.yaml" }}
             readOnly: true
           - name: secrets
-            mountPath: "/run/token.json"
+            mountPath: "/app/run/token.json"
             subPath: {{ .Values.secrets.tokenKey | default "token.json" }}
             readOnly: true
-          {{- end }}
-          {{- if .Values.nfs.enabled }}
-          {{- range .Values.nfs.mounts }}
-          - name: {{ .name }}
-            mountPath: {{ .mountPath | quote }}
-          {{- end }}
-          {{- end }}
-          {{- if .Values.databaces.enabled }}
-          - name: databaces
-            mountPath: "/app/run/GreenScout-Databases"
-            subPath: {{ .Values.databaces.existingClaim | default "databaces" }}
-            readOnly: true
-          {{- end }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+          - name: run
+            mountPath: "/app/run"          
           
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -112,33 +98,10 @@ spec:
   
       
       volumes:
-      {{- if .Values.secrets.enabled }}
-        - name: secrets
-          secret:
-            secretName: {{ .Values.secrets.secretName }}
-      {{- end }}
-      {{- if .Values.databaces.enabled }}
-        - name: databaces
-          {{- if .Values.persistence.databaces.enabled }}
-            {{- if eq .Values.persistence.databaces.type "pvc" }}
-          persistentVolumeClaim:
-            claimName: {{ if .Values.persistence.databaces.existingClaim }}{{ .Values.persistence.databaces.existingClaim }}{{- else }}{{ template "greenscout-backend.fullname" . }}-databaces{{- end }}
-            {{- else if eq .Values.persistence.databaces.type "hostPath" }}
-          hostPath:
-            path: {{ .Values.persistence.databaces.hostPath }}
-            type: Directory
-            {{- else }}
-          emptyDir: {}
-            {{- end }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-      {{- end }}
-      {{- if .Values.nfs.enabled }}
-      {{- range .Values.nfs.mounts }}
-        - name: {{ .name }}
-          nfs:
-            server: {{ .server | quote }}
-            path: {{ .path | quote }}
-      {{- end }}
-      {{- end }}
+      - name: secrets
+        secret:
+          secretName: {{ .Values.secrets.secretName }}
+
+      - name: run
+        persistentVolumeClaim:
+          claimName: greenscout-backend-run-pvc

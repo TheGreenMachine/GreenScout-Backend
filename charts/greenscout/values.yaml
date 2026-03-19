@@ -58,23 +58,3 @@ secrets:
   credentalsKey: "credentials.json"
   configsKey: "greenscout.config.yaml"
   tokenKey: "token.json"
-databaces:
-  enabled: false
-  # name of the secret containing the databaces
-  claimName: "greenscout-backend-databaces"
-persistence:
-  databaces:
-    enabled: true
-    type: pvc # or hostPath
-    existingClaim: "" # if using pvc, set this to the name of an existing claim
-
-# Optional NFS volumes (e.g. movies, tv, anime)
-nfs:
-  enabled: false
-  mounts: []
-  # Example:
-  # mounts:
-  #   - name: databaces
-  #     server: 192.168.1.7
-  #     path: /mnt/Apps/greenscout/databaces
-  #     mountPath: /run/
