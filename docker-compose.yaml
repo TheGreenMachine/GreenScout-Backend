@@ -1,8 +1,0 @@
-services:
-  webapp:
-    build:
-      context: . # The directory where the Dockerfile is located
-      dockerfile: Dockerfile # The name of the Dockerfile (optional, 'Dockerfile' is default)
-    ports:
-      - "8080:80" # Map port 8080 on the host to port 80 in the container
-    image: hello/greenscoutbackend:latest 
