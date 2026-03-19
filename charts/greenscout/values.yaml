@@ -4,6 +4,10 @@
 
 replicaCount: 2
 
+spec:
+  args:
+    - "test"
+
 image:
   repository: docker.io/landonmmmmmm/greenscoutbackend
   tag: "latest"
