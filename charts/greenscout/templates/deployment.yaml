@@ -81,6 +81,12 @@ spec:
             subPath: {{ .Values.secrets.tokenKey | default "token.json" }}
             readOnly: true
           {{- end }}
+          {{- if .Values.databaces.enabled }}
+          - name: databaces
+            mountPath: "/run/databaces"
+            subPath: {{ .Values.databaces.existingClaim | default "databaces" }}
+            readOnly: true
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           
@@ -100,9 +106,27 @@ spec:
       {{- end }}
 
   
-      {{- if .Values.secrets.enabled }}
+      
       volumes:
+      {{- if .Values.secrets.enabled }}
         - name: secrets
           secret:
             secretName: {{ .Values.secrets.secretName }}
+      {{- end }}
+      {{- if .Values.databaces.enabled }}
+        - name: databaces
+          {{- if .Values.persistence.databaces.enabled }}
+            {{- if eq .Values.persistence.databaces.type "pvc" }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.databaces.existingClaim }}{{ .Values.persistence.databaces.existingClaim }}{{- else }}{{ template "greenscout-backend.fullname" . }}-databaces{{- end }}
+            {{- else if eq .Values.persistence.databaces.type "hostPath" }}
+          hostPath:
+            path: {{ .Values.persistence.databaces.hostPath }}
+            type: Directory
+            {{- else }}
+          emptyDir: {}
+            {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
       {{- end }}
