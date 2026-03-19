@@ -4,10 +4,6 @@
 
 replicaCount: 2
 
-spec:
-  args:
-    - "test"
-
 image:
   repository: docker.io/landonmmmmmm/greenscoutbackend
   tag: "latest"
@@ -16,6 +12,8 @@ image:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+args:
+  - "test"
 
 serviceAccount:
   # Specifies whether a service account should be created
