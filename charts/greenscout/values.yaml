@@ -61,11 +61,11 @@ secrets:
   configsKey: "greenscout.config.yaml"
   tokenKey: "token.json"
 databaces:
-  enabled: true
+  enabled: false
   # name of the secret containing the databaces
   secretName: "greenscout-backend-databaces"
 persistence:
   databaces:
-    enabled: true
+    enabled: false
     type: pvc # or hostPath
     existingClaim: "" # if using pvc, set this to the name of an existing claim
