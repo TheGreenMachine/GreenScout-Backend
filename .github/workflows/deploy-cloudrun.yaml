@@ -88,6 +88,7 @@ jobs:
           workload_identity_provider: '${{ vars.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
           service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
 
+          
       # NOTE: Alternative option - authentication via credentials json
       # - name: Google Auth
       #   id: auth
