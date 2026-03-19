@@ -748,10 +748,10 @@ func configCustomEvent(configs GeneralConfigs) CustomEventConfigs {
 	}
 
 	if configs.CustomEventConfigs.CustomSchedule {
-		LogMessagef("Using %s/json as the match schedule! Please make that it meets your non-TBA event schedule manually.", CachedConfigs.RuntimeDirectory)
+		LogMessagef("Using %s/schedule.json as the match schedule! Please make that it meets your non-TBA event schedule manually.", CachedConfigs.RuntimeDirectory)
 	} else {
 		WipeSchedule()
-		LogMessage("Not using a ")
+		LogMessage("Not using a schedule")
 	}
 
 	configs.CustomEventConfigs.Configured = true
