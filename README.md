@@ -82,3 +82,24 @@ Additional documentation on various topics can be found [in the `docs` directory
   * Discrepencies for multi-scouting - the only one that is implemented right now is average times being too different
   * Greenlogger improvement
     * Having the errors also spit out the line of code/method/stacktrace they came from
+
+## Helm Repo Usage
+
+[Helm](https://helm.sh) must be installed to use the charts.  Please refer to
+Helm's [documentation](https://helm.sh/docs) to get started.
+
+Once Helm has been set up correctly, add the repo as follows:
+
+  helm repo add greenscout https://thegreenmachine.github.io/helm-charts
+
+If you had already added this repo earlier, run `helm repo update` to retrieve
+the latest versions of the packages.  You can then run `helm search repo
+<alias>` to see the charts.
+
+To install the greenscout chart:
+
+    helm install my-<chart-name> thegreenmachine/greenscout-backend
+
+To uninstall the chart:
+
+    helm uninstall my-<chart-name>
