@@ -78,7 +78,7 @@ spec:
             subPath: {{ .Values.secrets.tokenKey | default "token.json" }}
             readOnly: true
           - name: run
-            mountPath: "/app/run"          
+            mountPath: "/app/run/"          
           
       {{- with .Values.nodeSelector }}
       nodeSelector:
