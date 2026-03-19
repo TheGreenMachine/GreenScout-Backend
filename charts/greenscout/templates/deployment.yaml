@@ -81,6 +81,12 @@ spec:
             subPath: {{ .Values.secrets.tokenKey | default "token.json" }}
             readOnly: true
           {{- end }}
+          {{- if .Values.nfs.enabled }}
+          {{- range .Values.nfs.mounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath | quote }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.databaces.enabled }}
           - name: databaces
             mountPath: "/run/databaces"
@@ -129,4 +135,12 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+      {{- end }}
+      {{- if .Values.nfs.enabled }}
+      {{- range .Values.nfs.mounts }}
+        - name: {{ .name }}
+          nfs:
+            server: {{ .server | quote }}
+            path: {{ .path | quote }}
+      {{- end }}
       {{- end }}
