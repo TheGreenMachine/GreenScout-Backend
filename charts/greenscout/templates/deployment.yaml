@@ -60,11 +60,9 @@ spec:
           
           volumeMounts:
           # Credentials volume mount
-          {{- if .Values.credentials.enabled }}
-            - name: credentials
-              mountPath: "{{ .Values.credentials.mountPath }}"
-              subPath: {{ .Values.credentials.key | default "credentials.json" }}
-              readOnly: true
+          {{- if .Values.credentialsFile.enabled }}
+          - name: credentials
+            mountPath: /credentials
           {{- end }}
           # ConfigMap volume mount
           {{- if .Values.configMap.enabled }}
