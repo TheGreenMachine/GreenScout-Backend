@@ -24,5 +24,12 @@ jobs:
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0
+        with:
+          args: -o ${{ env.owner }} -r ${{ env.repo }}
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@v1.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
