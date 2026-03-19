@@ -90,7 +90,7 @@ Helm's [documentation](https://helm.sh/docs) to get started.
 
 Once Helm has been set up correctly, add the repo as follows:
 
-  helm repo add greenscout https://thegreenmachine.github.io/helm-charts
+  helm repo add greenscout https://thegreenmachine.github.io/GreenScout-Backend
 
 If you had already added this repo earlier, run `helm repo update` to retrieve
 the latest versions of the packages.  You can then run `helm search repo
@@ -98,7 +98,7 @@ the latest versions of the packages.  You can then run `helm search repo
 
 To install the greenscout chart:
 
-    helm install my-<chart-name> thegreenmachine/greenscout-backend
+  helm install my-<chart-name> greenscout/greenscout-backend
 
 To uninstall the chart:
 
