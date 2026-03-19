@@ -60,13 +60,19 @@ spec:
           
           volumeMounts:
           # Credentials volume mount
+          {{- if .Values.credentials.enabled }}
           - name: credentials
-            mountPath: /credentials
+            mountPath: "{{ .Values.credentials.mountPath }}"
+            subPath: {{ .Values.credentials.key | default "credentials.json" }}
+            readOnly: true
+          {{- end }}
           # ConfigMap volume mount
-            - name: config
-              mountPath: "{{ .Values.configMap.mountPath }}"
-              subPath: {{ .Values.configMap.key | default "greenscout-backend.config.yaml" }}
-              readOnly: true
+          {{- if .Values.configMap.enabled }}
+          - name: config
+            mountPath: "{{ .Values.configMap.mountPath }}"
+            subPath: {{ .Values.configMap.key | default "greenscout-backend.config.yaml" }}
+            readOnly: true
+          {{- end }}
           ## Resources
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
@@ -88,15 +94,19 @@ spec:
 
   
       volumes:
+        {{- if .Values.credentials.enabled }}
         - name: credentials
           secret:
-            secretName: {{ .Values.credentialsFile.secretName }}
+            secretName: {{ .Values.credentials.secretName }}
             items:
-              - key: {{ .Values.credentialsFile.key | default "credentials.json" }}
+              - key: {{ .Values.credentials.key | default "credentials.json" }}
                 path: "credentials.json"
+        {{- end }}
+        {{- if .Values.configMap.enabled }}
         - name: config
           configMap:
             name: {{ .Values.configMap.name }}
             items:
               - key: {{ .Values.configMap.key | default "greenscout-backend.config.yaml" }}
+        {{- end }}
       
