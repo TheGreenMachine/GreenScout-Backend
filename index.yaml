@@ -3,6 +3,26 @@ entries:
   greenscout-backend:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-03-19T20:34:48.926860939Z"
+    description: A Helm chart for the GreenScout backend application, a self-hosted
+      scouting solution for FRC teams.
+    digest: 57f0bfd46ff6548a9c43529b8f0a53835a83afc2fe07cc5d3264fe4f53360eaa
+    home: https://github.com/TheGreenMachine/GreenScout-Backend
+    icon: https://avatars.githubusercontent.com/u/931344?s=200&v=4
+    keywords:
+    - greenscout-backend
+    - edina
+    - frc
+    - robotics
+    - teem 1816
+    - scouting
+    name: greenscout-backend
+    type: application
+    urls:
+    - https://github.com/TheGreenMachine/GreenScout-Backend/releases/download/greenscout-backend-0.0.2/greenscout-backend-0.0.2.tgz
+    version: 0.0.2
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-03-19T20:27:06.833710364Z"
     description: A Helm chart for the GreenScout backend application, a self-hosted
       scouting solution for FRC teams.
@@ -21,4 +41,4 @@ entries:
     urls:
     - https://TheGreenMachine.github.io/GreenScout-Backend/greenscout-backend-0.0.1.tgz
     version: 0.0.1
-generated: "2026-03-19T20:27:06.832402674Z"
+generated: "2026-03-19T20:34:48.926872506Z"
