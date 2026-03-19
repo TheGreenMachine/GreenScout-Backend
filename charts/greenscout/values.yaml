@@ -52,7 +52,7 @@ affinity: {}
 secrets:
   enabled: true
   # name of the secret containing the credentials
-  secretName: "<secret-name>"
+  secretName: "greenscout-backend-secrets"
   credentalsKey: "credentials.json"
   configsKey: "greenscout.config.yaml"
   tokenKey: "token.json"
