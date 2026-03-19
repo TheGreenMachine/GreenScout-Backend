@@ -49,15 +49,11 @@ resources: {}
 
 affinity: {}
 
-credentials:
+secrets:
   enabled: true
   # name of the secret containing the credentials
   secretName: "<secret-name>"
   # if you have the credentials in a key other than credentials.json
   # key: "credentials.json"
   mountPath: /app/conf
-configMap:
-  enabled: true
-  name: "<config-map-name>"
-  # if your config file has a difrent expected file name, you can specify it here. Otherwise, it will be mounted as config.yaml
-  mountPath: /app/config
+

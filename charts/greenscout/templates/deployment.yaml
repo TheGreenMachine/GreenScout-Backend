@@ -58,22 +58,25 @@ spec:
               path: /
               port: http
           
-          volumeMounts:
-          # Credentials volume mount
+           volumeMounts:
           {{- if .Values.secrets.enabled }}
           - name: secrets
-            mountPath: "{{ .Values.secrets.mountPath }}"
-            subPath: {{ .Values.secrets.key | default "credentials.json" }}
+            mountPath: "/run/credentials.json"
+            subPath: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
+            readOnly: true
+          - name: secrets
+            mountPath: "/conf/credentials.json"
+            subPath: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
+            readOnly: true
+          - name: secrets
+            mountPath: "/greenscout.config.yaml"
+            subPath: {{ .Values.secrets.configsKey | default "greenscout.config.yaml" }}
+            readOnly: true
+          - name: secrets
+            mountPath: "/run/token.json"
+            subPath: {{ .Values.secrets.tokenKey | default "token.json" }}
             readOnly: true
           {{- end }}
-          # ConfigMap volume mount
-          {{- if .Values.configMap.enabled }}
-          - name: config
-            mountPath: "{{ .Values.configMap.mountPath }}"
-            subPath: {{ .Values.configMap.key | default "greenscout-backend.config.yaml" }}
-            readOnly: true
-          {{- end }}
-          ## Resources
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           
@@ -93,17 +96,9 @@ spec:
       {{- end }}
 
   
+    {{- if .Values.secrets.enabled }}
       volumes:
-        {{- if .Values.secrets.enabled }}
         - name: secrets
           secret:
             secretName: {{ .Values.secrets.secretName }}
-            items:
-              - key: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
-                path: "/run/credentials.json"
-              - key: {{ .Values.secrets.configsKey | default "greenscout.config.yaml" }}
-                path: "/greenscout.config.yaml"
-              - key: {{ .Values.secrets.tokenKey | default "token.json" }}
-                path: "/run/token.json"
-        {{- end }}
-      
+      {{- end }}
