@@ -51,7 +51,8 @@ name: Build and Deploy to Cloud Run with KRM
 on:
   push:
     branches:
-      - jarrpa/dev/cloudy
+      - main
+      - jarrpa/2026-pittsburgh
 
 env:
   PROJECT_ID: oceanic-gecko-338300
