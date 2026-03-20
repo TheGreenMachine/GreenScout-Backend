@@ -14,7 +14,7 @@ nameOverride: ""
 fullnameOverride: ""
 args:
   - "test"
-restartPolicy: Never # DEBUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGg
+restartPolicy: Always
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -58,3 +58,5 @@ secrets:
   credentalsKey: "credentials.json"
   configsKey: "greenscout.config.yaml"
   tokenKey: "token.json"
+
+runClaimName: "greenscout-backend-run-pvc"

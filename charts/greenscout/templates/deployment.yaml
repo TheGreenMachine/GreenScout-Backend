@@ -97,12 +97,12 @@ spec:
       {{- end }}
 
   
-      
       volumes:
       - name: secrets
         secret:
           secretName: {{ .Values.secrets.secretName }}
-
+      {{- if .Values.volumes.run.enabled }}
       - name: run
         persistentVolumeClaim:
-          claimName: {{ .Values.runClaimName | default "greenscout-backend-run-pvc" }}
+          claimName: {{ .Values.volumes.run.claimName | default "greenscout-backend-run-pvc" }}
+      {{- end }}
