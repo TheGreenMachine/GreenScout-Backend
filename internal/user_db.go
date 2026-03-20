@@ -69,7 +69,7 @@ func GetUUID(username string, createIfNot bool) (string, bool) {
 	}
 
 	if !userExists {
-		NewUser(username, "") //Empty UUID for assignment later
+		NewUser(username, uuid.New().String()) //Empty UUID for assignment later
 	}
 
 	var userId string
