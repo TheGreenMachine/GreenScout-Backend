@@ -59,4 +59,7 @@ secrets:
   configsKey: "greenscout.config.yaml"
   tokenKey: "token.json"
 
-runClaimName: "greenscout-backend-run-pvc"
+volumes:
+  run:
+    enabled: false
+    claimName: "greenscout-backend-run-pvc"
