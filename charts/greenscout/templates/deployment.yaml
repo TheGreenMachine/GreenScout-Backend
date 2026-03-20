@@ -45,6 +45,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          restartPolicy: {{ .Values.restartPolicy | default "OnFailure" }} # Use OnFailure to prevent automatic deletion of the pod I MADE DAM NEAR 500000 COMMITS AND I NEVER THOUGHT TO CHANGE THE RESTART POLICY.
           args:
             - "test"
           ports:
@@ -104,4 +105,4 @@ spec:
 
       - name: run
         persistentVolumeClaim:
-          claimName: greenscout-backend-run-pvc
+          claimName: {{ .Values.runClaimName | default "greenscout-backend-run-pvc" }}
