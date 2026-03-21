@@ -546,7 +546,11 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 // The okCode parameter exists because some requests require a 200 response even before acting. This is honestly just trial and error to determine.
 func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", CachedConfigs.FrontendDomain)
+		allowOrigin := CachedConfigs.FrontendDomain
+		if r.Header.Get("Origin") != "" {
+			allowOrigin = r.Header.Get("Origin")
+		}
+		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, username, uuid, displayName, Filename, userInput, color, type")
 		w.Header().Set("Access-Control-Expose-Headers", "Role")
