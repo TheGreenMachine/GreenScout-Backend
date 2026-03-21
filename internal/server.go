@@ -369,7 +369,7 @@ func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   secureCookies,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "certificate",
@@ -377,7 +377,7 @@ func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   secureCookies,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		if role == "super" {
@@ -552,7 +552,7 @@ func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
 		}
 		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, username, uuid, displayName, Filename, userInput, color, type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, username, uuid, displayName, Filename, userInput, color, type")
 		w.Header().Set("Access-Control-Expose-Headers", "Role")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
