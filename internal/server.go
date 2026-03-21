@@ -838,10 +838,14 @@ func getAuthFromCookies(request *http.Request) RequestAuth {
 
 	if c, err := request.Cookie("uuid"); err == nil && c != nil {
 		auth.UUID = c.Value
+	} else if err != nil {
+		LogError(err, "error getting request cookie 'uuid'")
 	}
 
 	if c, err := request.Cookie("certificate"); err == nil && c != nil {
 		auth.Certificate = c.Value
+	} else if err != nil {
+		LogError(err, "error getting request cookie 'certificate'")
 	}
 
 	role, ok := VerifyCertificate(auth.Certificate)
