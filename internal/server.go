@@ -404,7 +404,7 @@ func handleLogoutRequest(writer http.ResponseWriter, request *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   secureCookies,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	// clear certificate cookie
@@ -415,7 +415,7 @@ func handleLogoutRequest(writer http.ResponseWriter, request *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   secureCookies,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	httpResponsef(writer, "Problem writing http response to logout request", "Logged out")
