@@ -467,7 +467,10 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Cache-Control", "private, max-age=0, must-revalidate")
 	writer.Header().Set("Content-Type", "text/css; charset=utf-8")
 
-	theme := "light" // getThemeFromCookies(auth.UUID) not implemented
+	theme := getTheme(auth.UUID)
+	if theme == "" {
+		theme = "light"
+	}
 
 	http.ServeFile(writer, request, "run/themes/"+theme+".css")
 }

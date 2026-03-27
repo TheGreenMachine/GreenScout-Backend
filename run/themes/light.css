@@ -1,84 +1,242 @@
 :root {
     /* Color Variables */
-    /*--background-color: #f8f9fe;
-    --accent-color: #9bcbfb;
-    --accent-color2: #8fbdeb;
-    --accent-color3: #cee5ff;
-    --error-color: lightcoral;
-    --disabled-color: #a1a2a6;
-    --font-color: #1e2226;
-    --sidenav-hover-color: #444;
-    --faded-text-color: #5f6167;
-    --kelly-green: #4cbb17; /* Kelly Green is the color of Edina's "The Green Machine"
-    --error-message-color: #d32f2f;
-    --check-background-color: #2f628d;
-    --checkbox-default-color: #eee;
-    --checkbox-hover-color: #ccc;
-    --border-color-gray: #93979f;
-    --border-color-blue: #417096;
-    --sidenav-button-color: #dfdfdf;*/
+    --background-color: #f8f9fe !important;
+    --accent-color: #9bcbfb !important;
+    --accent-color2: #8fbdeb !important;
+    --accent-color3: #cee5ff !important;
+    --error-color: lightcoral !important;
+    --disabled-color: #a1a2a6 !important;
+    --font-color: #1e2226 !important;
+    --sidenav-hover-color: #444 !important;
+    --faded-text-color: #5f6167 !important;
+    --kelly-green: #4cbb17 !important; /* Kelly Green is the color of Edina's "The Green Machine" */
+    --error-message-color: #d32f2f !important;
+    --check-background-color: #2f628d !important;
+    --checkbox-default-color: #eee !important;
+    --checkbox-hover-color: #ccc !important;
+    --border-color-gray: #93979f !important;
+    --border-color-blue: #417096 !important;
+    --sidenav-button-color: #dfdfdf !important;
     /* General Sizing Variables */
-    --background-color: #ff0000 !important;
-    --accent-color: #ff1a1a !important;
-    --accent-color2: #ff3333 !important;
-    --accent-color3: #ff6666 !important;
-    --error-color: #ff0000 !important;
-    --disabled-color: #ff8080 !important;
-    --font-color: #7a0000 !important;
-    --sidenav-hover-color: #b30000 !important;
-    --faded-text-color: #cc0000 !important;
-    --kelly-green: #ff0000 !important; /* Kelly Green is the color of Edina's "The Green Machine" */
-    --error-message-color: #ff0000 !important;
-    --check-background-color: #990000 !important;
-    --checkbox-default-color: #ffcccc !important;
-    --checkbox-hover-color: #ffb3b3 !important;
-    --border-color-gray: #cc0000 !important;
-    --border-color-blue: #ff0000 !important;
-    --sidenav-button-color: #ff9999 !important;
-    --font-size-large: 3vh;
-    --font-size-small: 2.5vh;
-    --page-height: 100vh;
-    --page-width: 100vw;
-    --content-height: calc(var(--page-height) - var(--navbar-height));
-    --content-width: var(--page-width);
+    --border-radius: 1em !important;
+    --font-size-large: 3vh !important;
+    --font-size-small: 2.5vh !important;
+    --font-weight: 1 !important;
+    --page-height: 100vh !important;
+    --page-width: 100vw !important;
+    --content-height: calc(var(--page-height) - var(--navbar-height)) !important;
+    --content-width: var(--page-width) !important;
+    --element-height: 6.2vh !important; /* Not used universally, but use a lot */
+
     /* Navbar Sizing Variables */
-    --sidenav-width: 70vw;
-    --navbar-height: 8vh;
-    --sidenav-usertile-height: 0%; /* Set to 0 while user tile is diabled */
-    --sidenav-usertile-width: 15vh;
-    --sidenav-section-height: calc((100% - var(--sidenav-usertile-height)) / 2);
+    --sidenav-width: 70vw !important;
+    --navbar-height: 8vh !important;
+    --sidenav-usertile-height: 0% !important; /* Set to 0 while user tile is diabled */
+    --sidenav-usertile-width: 15vh !important;
+    --sidenav-section-height: calc((100% - var(--sidenav-usertile-height)) / 2) !important;
+    --navbar-hamburger-padding: 15px !important;
+    --navbar-hamburger-top-distance: -6px !important;
+    --navbar-text-padding-top: 5px !important;
+    --sidenav-usertile-margin-bottom: 3vw !important;
+    --sidenav-userimage-size: 3vw !important;
+    --sidenav-usertext-h1-margin-top: 1.7vh !important;
+    --sidenav-usertext-p-margin-top: -4.3vh !important;
+    --sidenav-usertext-p-margin-left: 0.2vw !important;
+    --sidenav-padding-top: 60px !important;
     /* Login Sizing Variables */
+    --login-h1-height: 3vh !important;
+    --login-h1-margin-top: 4vh !important;
+    --login-error-message-margin: 10px 0 !important;
+
+    --login-box-width: 30vh !important;
+    --login-box-margin-top: 5vh !important;
+    --login-box-margin-bottom: 1.5vh !important;
+    --login-box-padding-left: calc(var(--login-box-background-size) + 1vh) !important;
+    --login-box-background-size: 3vh !important;
+    --login-box-background-position: 5px 1.2vh !important;
+
+    --login-button-width: 30vh !important;
+    --login-button-height: 6vh !important;
 
     /* Match Form Sizing Variables */
+    --matchform-text-padding-top: 5px !important;
+    --matchform-text-height: 30px !important;
+
+    --matchform-side-panel-width: 8vh !important;
+    --matchform-grid-template: 1fr var(--matchform-side-panel-width) !important;
+
+    --matchform-child-margin-side: 7.5vw !important; /* Used Throughout Child Components */
+    --matchform-child-width-to-subtract: 15vw !important; /* Used Throughout Child Components */
+
+    --matchform-element-height: 6.2vh !important; /* Replace throughout with element-height */
+    --matchform-matchteam-margin-top: 1.5vh !important;
+
+    --matchform-header-padding-top: 5px !important;
+    --matchform-header-end-margin-top: 8vh !important;
+
+    --matchform-notes-height: 20vh !important;
+
+    --matchform-cycle-container-height: 40vh !important;
+    --matchform-cycle-item-height: 9vh !important;
+    --matchform-cycle-item-margin-bottom: 1vw !important;
+    --matchform-cycle-item-image-height: 4vh !important;
+    --matchform-cycle-item-image-width: 4vh !important;
+    --matchform-cycle-delete-height: 30% !important;
+    --matchform-cycle-delete-width: 10% !important;
+
+    --matchform-cycle-text-padding-top: 5% !important;
+    --matchform-cycle-text-padding-left: 5% !important;
+    --matchform-cycle-text-width: 25 !important;
+
+    --matchform-acclabel-width: 10vh !important;
+    --matchform-acclabel-height: 3vh !important;
+    --matchform-accslider-width: 70% !important;
+    --matchform-accslider-height: 2vh !important;
+    --matchform-accslider-margin-right: 10% !important;
+    --matchform-accslider-thumb-size: 50px !important;
+
+    --matchform-bottomspace-height: 15vh !important;
+    --matchform-bottomspace-max-height: 80px !important;
 
     /* Match Form Checkbox Sizing Variables */
+    --check-text-height: 30px !important;
+    --check-padding-top: 1vh !important;
+
+    --check-div-margin: 5vh !important;
+
+    --check-size: 2.5vh !important;
+
+    --check-container-padding-left: 35px !important;
+    --check-container-margin-bottom: 12px !important;
+
+    --check-mark-left: 1vw !important;
+
+    --check-mark-after-left: 9px !important;
+    --check-mark-after-top: 5px !important;
+    --check-mark-after-size: 1.2vh !important;
+
+    --check-special-margin-left: 7.5vw !important;
+
+    --check-auto-text-padding-top: 1vh !important;
+    --check-auto-text-width: 80vw !important;
 
     /* Match Form Counter Sizing Variables */
+    --counter-text-padding-top: 5px !important;
+    --counter-text-height: 30px !important;
+    --counter-text-margin-bottom: 5vh !important;
+
+    --counter-child-margin-vertical: 3vh !important;
+
+    --counter-button-height: 5.2vh !important;
+    --counter-add-width: 40% !important;
+    --counter-subtract-width: 30% !important;
+    --counter-button-margin-left: 1vw !important;
+
+    /* Match Form Slider Sizing Variables */
+    --slider-container-width: 70% !important;
+    --slider-container-margin-bottom: 10% !important;
+
+    /* Match Form Collapsible Dropdown Sizing Variables */
+    --collapsible-open-max-height: 100% !important; /* 2000px */
+    --collapsible-padding: 12px 16px !important;
 
     /* Match Form Dropdown Sizing Variables */
+    --dropdown-margin-top: 3vh !important;
+    --dropdown-padding-bottom: 0.5vh !important;
+    --dropdown-height: 5.2vh !important;
+    --dropdown-width: 15vh !important;
+
+    --dropdown-text-padding-top: 5px !important;
+    --dropdown-text-height: 30px !important;
+
+    --dropdown-driverstation-margin-top: 1vh !important;
+
+    --dropdown-dtext-height: 3.1vh !important;
+    --dropdown-dtext-width: 70vw !important;
+
+    --dropdown-collect-container-margin-top: 3% !important;
+
+    --dropdown-dtext-collect-width: 70vw !important;
+
+    --dropdown-collect-margin-top: 16% !important;
+    --dropdown-collect-padding-bottom: 0.5vh !important;
+
+    --dropdown-park-text-padding-top: 4% !important;
 
     /* Match Form Trigger Sizing Variables */
+    --trigger-margin-top: 5.7vh !important;
+    --trigger-margin-bottom: 4.4vh !important;
+    --trigger-size: 6.5vh !important;
+
+    --trigger-stop-image-height: 2vh !important;
+    --trigger-stop-image-background-size: 1.7vh 1.7vh !important;
+    --trigger-stop-image-background-position: 2vh 0vh !important;
+
+    --trigger-reset-height: 8vh !important;
 
     /* Match Form Submit/Replay Sizing Variables */
+    --submitreplay-div-height: 8vh !important;
+    --submitreplay-div-margin-bottom: 1vh !important;
+
+    --submitreplay-button-margin-top: 5.7vh !important;
+    --submitreplay-button-margin-bottom: 4.4vh !important;
+
+    --submitreplay-text-margin-top: -1vh !important;
+
+    --submitreplay-label-margin-top: 2vh !important;
+
+    --submit-image-margin-top: -3.5vh !important;
+    --submit-image-size: 4.8vh !important;
 
     /* General Cycles Sizing Variables */
-    --font-size-cycle: 1.8vh;
+    --font-size-cycle: 1.8vh !important;
+
     /* Cycle Start/Stop Button Sizing Variables */
+    --cycle-margin-top: 5.7vh !important;
+    --cycle-margin-bottom: 4.4vh !important;
+    --cycle-size: 6.5vh !important;
+    --cycle-top: 4vh !important;
+
+    --cycle-image-height: 2vh !important;
+    --cycle-image-background-size: 1.7vh 1.7vh !important;
+    --cycle-image-background-position: 2vh 0vh !important;
 
     /* Score Cycle Sizing Variables */
+    --score-top: 13vh !important;
+    --score-image-height: 3vh !important;
 
     /* Shuttle Cycle Sizing Variables */
+    --shuttle-top: 22vh !important;
+
+    /* Hub Switch Cycle Sizing Variables */
+    --hubSwitch-top: 31vh !important;
 
     /* Home Page Sizing Variables */
-    --refresh-button-size: 7.9vh;
-    --new-matchpit-button-height: 8vh;
+    --new-matchpit-button-height: 8vh !important;
+    --new-matchpit-button-width: 50vw !important;
+
+    --home-text-padding-top: 5px !important;
+    --home-assigned-h-padding-top: 10px !important;
+    --home-refresh-container-bottom: -14px !important;
+    --home-refresh-container-right: 17px !important;
+    --home-refresh-button-margin-top: 5.7vh !important;
+    --home-refresh-button-margin-bottom: 4.4vh !important;
+    --refresh-button-size: 7.9vh !important;
+
     /* Sizing Variables */
 
     /* Leader Board Sizing Variables */
-    --leader-board-element-height: 5vh;
+    --leader-board-element-height: 5vh !important;
 
     /* Settings Sizing Variables */
-    --settings-element-width: 80%;
-    --settings-element-height: calc(var(--font-size-large) * 2);
-    --settings-element-spacing: calc(var(--font-size-small) / 2);
+    --settings-element-width: 80% !important;
+    --settings-element-height: calc(var(--font-size-large) * 2) !important;
+    --settings-element-spacing: calc(var(--font-size-small) / 2) !important;
+    --settings-debug-image-offset: 2vh !important;
+
+    --settings-themedrop-padding-top: 5px !important;
+    --settings-themedrop-height: 30px !important;
+    --settings-themedrop-text-width: 70vw !important;
+    --settings-themedrop-margin-top: 10% !important;
+    --settings-themedrop-padding-bottom: 0.5vh !important;
 }

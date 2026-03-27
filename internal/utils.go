@@ -14,6 +14,24 @@ import (
 	"strings"
 )
 
+func ListAllThemes() ([]string, error) {
+	files, err := os.ReadDir("run/themes")
+	if err != nil {
+		return nil, err
+	}
+	var cleanNames []string
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		fileName := file.Name()
+		if strings.HasSuffix(fileName, ".css") {
+			cleanNames = append(cleanNames, strings.TrimSuffix(fileName, ".css"))
+		}
+	}
+	return cleanNames, nil
+}
+
 // Simple wrapper for converting bool to string for replays
 func GetReplayString(isReplay bool) string {
 	if isReplay {
@@ -380,7 +398,7 @@ func GetAllMatching(checkAgainst string) []string {
 		for _, jsonFile := range writtenJson {
 			splitFile := strings.Split(jsonFile.Name(), "_")
 
-			if len(splitFile) < 4 {
+			if len(splitFile) < 3 || len(splitAgainst) < 3 {
 				continue
 			}
 

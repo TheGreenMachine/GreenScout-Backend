@@ -163,6 +163,7 @@ type UserInfo struct {
 	HighScore   int            // The high score
 	Color       LBColor        // The leaderboard color
 	Pfp         string         // The relative path to the profile picture
+	Theme       string         // The theme the user is using
 }
 
 // User information to be served for admins to edit
@@ -457,12 +458,33 @@ func getPfp(uuid string) string {
 }
 
 // Sets a given user's path to profile picture
-func SetPfp(username string, pfp string) {
-	uuid, _ := GetUUID(username, true)
-
+func SetPfp(uuid string, pfp string) {
 	_, execErr := userDB.Exec("update users set pfp = ? where uuid = ?", pfp, uuid)
 
 	if execErr != nil {
 		LogErrorf(execErr, "Problem executing sql query UPDATE users SET pfp = ? WHERE uuid = ? with args: %v, %v", pfp, uuid)
+	}
+}
+
+// Gets the relative path of a given user's profile picture
+func getTheme(uuid string) string {
+	var theme string
+	response := userDB.QueryRow("select theme from users where uuid = ?", uuid)
+	scanErr := response.Scan(&theme)
+	if scanErr != nil {
+		// LogError(scanErr, "Problem scanning response to sql query SELECT theme FROM users WHERE uuid = ? with arg: "+uuid)
+		SetTheme(uuid, "light")
+		return "light"
+	}
+
+	return theme
+}
+
+// Gets the relative path of a given user's profile picture
+func SetTheme(uuid string, themeName string) {
+	_, execErr := userDB.Exec("update users set theme = ? where uuid = ?", themeName, uuid)
+
+	if execErr != nil {
+		LogErrorf(execErr, "Problem executing sql query UPDATE users SET theme = ? WHERE uuid = ? with args: %v, %v", themeName, uuid)
 	}
 }
