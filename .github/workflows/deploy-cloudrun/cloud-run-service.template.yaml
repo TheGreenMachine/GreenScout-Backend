@@ -1,0 +1,47 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ${SERVICE}
+spec:
+  template:
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 60
+      serviceAccountName: ${SERVICE_ACCOUNT}
+      containers:
+      - name: backend-service
+        image: ${IMAGE}
+        args:
+        - test
+        ports:
+        - name: http1
+          containerPort: 8080
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        volumeMounts:
+        - name: run
+          mountPath: /app/run
+        - name: conf
+          mountPath: /app/conf
+        startupProbe:
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 3
+          tcpSocket:
+            port: 8080
+      volumes:
+      - name: run
+        csi:
+          driver: gcsfuse.run.googleapis.com
+          volumeAttributes:
+            bucketName: ${RUN_BUCKET_NAME}
+      - name: conf
+        csi:
+          driver: gcsfuse.run.googleapis.com
+          volumeAttributes:
+            bucketName: ${CONF_BUCKET_NAME}
+  traffic:
+  - percent: 100
+    latestRevision: true

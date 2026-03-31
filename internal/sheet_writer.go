@@ -92,19 +92,18 @@ var Srv *sheets.Service
 func SetupSheetsAPI(creds []byte) {
 	ctx := context.Background()
 
-	config, err := google.ConfigFromJSON(creds, "https://www.googleapis.com/auth/spreadsheets")
+	client, err := google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
 	if err != nil {
 		FatalError(err, "Unable to parse client secret file to config: %v")
 	}
-	client := getClient(config)
-
 	Srv, err = sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		FatalError(err, "Unable to retrieve Sheets client: %v")
 	}
-	LogMessagef("Client retrieved for: %v", Srv.UserAgent)
+	LogMessagef("Client retrieved for: %v", Srv.BasePath)
 
 	SpreadsheetId = CachedConfigs.SpreadSheetID
+	LogMessagef("Using SpreadsheetId: %v", CachedConfigs.SpreadSheetID)
 }
 
 // Writes team data from multi-scouting to a specified line
@@ -256,6 +255,9 @@ func IsSheetValid(id string) bool {
 	spreadsheetId := id
 	readRange := "RawData!A1:1"
 	_, err := Srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
+	if err != nil {
+		LogErrorf(err, "Failed to read from %q on sheet %q", readRange, spreadsheetId)
+	}
 	return err == nil
 }
 

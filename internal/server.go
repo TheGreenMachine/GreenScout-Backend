@@ -369,7 +369,7 @@ func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   secureCookies,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "certificate",
@@ -377,7 +377,7 @@ func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   secureCookies,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 		})
 
 		if role == "super" {
@@ -404,7 +404,7 @@ func handleLogoutRequest(writer http.ResponseWriter, request *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   secureCookies,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	// clear certificate cookie
@@ -415,7 +415,7 @@ func handleLogoutRequest(writer http.ResponseWriter, request *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   secureCookies,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	httpResponsef(writer, "Problem writing http response to logout request", "Logged out")
@@ -546,9 +546,13 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 // The okCode parameter exists because some requests require a 200 response even before acting. This is honestly just trial and error to determine.
 func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", CachedConfigs.FrontendDomain)
+		allowOrigin := CachedConfigs.FrontendDomain
+		if r.Header.Get("Origin") != "" {
+			allowOrigin = r.Header.Get("Origin")
+		}
+		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, username, uuid, displayName, Filename, userInput, color, type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, username, uuid, displayName, Filename, userInput, color, type")
 		w.Header().Set("Access-Control-Expose-Headers", "Role")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
@@ -838,10 +842,14 @@ func getAuthFromCookies(request *http.Request) RequestAuth {
 
 	if c, err := request.Cookie("uuid"); err == nil && c != nil {
 		auth.UUID = c.Value
+	} else if err != nil {
+		LogError(err, "error getting request cookie 'uuid'")
 	}
 
 	if c, err := request.Cookie("certificate"); err == nil && c != nil {
 		auth.Certificate = c.Value
+	} else if err != nil {
+		LogError(err, "error getting request cookie 'certificate'")
 	}
 
 	role, ok := VerifyCertificate(auth.Certificate)

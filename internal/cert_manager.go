@@ -54,6 +54,7 @@ func VerifyCertificate(certificate string) (string, bool) {
 	scanErr := result.Scan(&certificateRole)
 
 	if scanErr != nil {
+		LogError(scanErr, "error verifying certificate")
 		return "none", false
 	}
 
