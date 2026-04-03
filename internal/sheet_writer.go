@@ -17,6 +17,12 @@ import (
 	yaml "sigs.k8s.io/yaml/goyaml.v2"
 )
 
+var useLocalAuth bool = false
+
+func UseLocalAuth(val bool) {
+	useLocalAuth = val
+}
+
 // Early methods (setup) are from google's quickstart, so I didn't change much about them
 
 // Retrieve a token, saves the token, then returns the generated client.
@@ -92,10 +98,22 @@ var Srv *sheets.Service
 func SetupSheetsAPI(creds []byte) {
 	ctx := context.Background()
 
-	client, err := google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
-	if err != nil {
-		FatalError(err, "Unable to parse client secret file to config: %v")
+	var client *http.Client
+	var err error
+
+	if useLocalAuth {
+		config, err := google.ConfigFromJSON(creds, "https://www.googleapis.com/auth/spreadsheets")
+		if err != nil {
+			FatalError(err, "Unable to parse client secret file to config: %v")
+		}
+		client = getClient(config)
+	} else {
+		client, err = google.DefaultClient(context.Background(), sheets.SpreadsheetsScope)
+		if err != nil {
+			FatalError(err, "Unable to parse client secret file to config: %v")
+		}
 	}
+
 	Srv, err = sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		FatalError(err, "Unable to retrieve Sheets client: %v")
