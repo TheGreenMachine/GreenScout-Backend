@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -141,6 +142,7 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/getPfp", handleWithCORS(handlePfpRequest, true))
 	http.HandleFunc("/generalInfo", handleWithCORS(handleGeneralInfoRequest, true))
 	http.HandleFunc("/allEvents", handleWithCORS(handleEventsRequest, true))
+	http.HandleFunc("/allThemes", handleWithCORS(handleThemesRequest, false))
 	http.HandleFunc("/gallery", handleWithCORS(handleGalleryRequest, true))
 
 	//Provides Authentication
@@ -151,13 +153,14 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/dataEntry", handleWithCORS(postTeamData, true))
 	http.HandleFunc("/pitScout", handleWithCORS(postPitScout, true))
 	http.HandleFunc("/singleSchedule", handleWithCORS(serveScouterSchedule, true))
-	http.HandleFunc("/theme", handleWithCORS(serveTheme, false))
+	http.HandleFunc("/getTheme", handleWithCORS(serveTheme, false))
 
 	//Admin or curr user
 	http.HandleFunc("/setDisplayName", handleWithCORS(setDisplayName, true))
 	http.HandleFunc("/setUserPfp", handleWithCORS(setPfp, true))
 	http.HandleFunc("/provideAdditions", handleWithCORS(handleFrontendAdditions, true))
 	http.HandleFunc("/setColor", handleWithCORS(handleColorChange, true))
+	http.HandleFunc("/setTheme", handleWithCORS(setTheme, false))
 
 	//Admin or verified
 	http.HandleFunc("/spreadsheet", handleWithCORS(serveSpreadsheet, true))
@@ -459,20 +462,105 @@ func serveScouterSchedule(writer http.ResponseWriter, request *http.Request) {
 	httpResponsef(writer, "Problem serving scouter schedule", "%s", response)
 }
 
+// Gives back a theme css file
 func serveTheme(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromCookies(request)
-	_ = auth
 
 	writer.Header().Set("Vary", "Cookie")
-	writer.Header().Set("Cache-Control", "private, max-age=0, must-revalidate")
+	writer.Header().Set("Cache-Control", "private, max-age=2, must-revalidate")
 	writer.Header().Set("Content-Type", "text/css; charset=utf-8")
 
+	// Optionally if you want to grab a theme independent of the user
+	directTheme := request.Header.Get("theme")
+
 	theme := getTheme(auth.UUID)
-	if theme == "" {
+
+	if directTheme != "" {
+		allThemes, err := ListAllThemes()
+		if err != nil {
+			LogError(err, "Failed to fetch all themes: ")
+
+			writer.WriteHeader(500)
+			httpResponsef(writer, "Could not find specified theme", "An unexpected error occurred preventing validation of the theme name")
+			return
+		}
+
+		// this prevents the client from deciding it wants just ANY file on our system (mucho bado)
+		if slices.Contains(allThemes, directTheme) {
+			theme = directTheme
+		} else {
+			writer.WriteHeader(404)
+			httpResponsef(writer, "Could not find specified theme", "Theme %s does not exist.", directTheme)
+			return
+		}
+
+	} else if theme == "" {
 		theme = "light"
 	}
 
+	writer.WriteHeader(200)
 	http.ServeFile(writer, request, "run/themes/"+theme+".css")
+}
+
+func setTheme(writer http.ResponseWriter, request *http.Request) {
+	auth := getAuthFromCookies(request)
+
+	if !auth.Authed {
+		writer.WriteHeader(401)
+		httpResponsef(writer, "Could not set specified theme", "Not authenticated :(")
+		return
+	}
+
+	wantedTheme := request.Header.Get("theme")
+
+	if wantedTheme != "" {
+		allThemes, err := ListAllThemes()
+		if err != nil {
+			LogError(err, "Failed to fetch all themes: ")
+
+			writer.WriteHeader(500)
+			httpResponsef(writer, "Could not set specified theme", "An unexpected error occurred preventing validation of the theme name")
+			return
+		}
+
+		// Do the checking early when we set the theme
+		if slices.Contains(allThemes, wantedTheme) {
+			SetTheme(auth.UUID, wantedTheme)
+
+			writer.WriteHeader(200)
+			httpResponsef(writer, "Could set specified theme", "Successfully switched to \"%s\".", wantedTheme)
+		} else {
+			writer.WriteHeader(404)
+			httpResponsef(writer, "Could not set specified theme", "Theme \"%s\" does not exist.", wantedTheme)
+			return
+		}
+	}
+
+}
+
+func handleThemesRequest(writer http.ResponseWriter, request *http.Request) {
+	allThemes, err := ListAllThemes()
+	if err != nil {
+		LogError(err, "Failed to fetch all themes: ")
+
+		writer.WriteHeader(500)
+		httpResponsef(writer, "Could not fetch all themes", "An unexpected error occurred preventing the reading of the theme list")
+		return
+	}
+
+	data := struct {
+		Themes []string `json:"themes"`
+	}{
+		Themes: allThemes,
+	}
+
+	writer.Header().Add("Content-Type", "application/json")
+	encodeErr := json.NewEncoder(writer).Encode(data)
+	if encodeErr != nil {
+		LogErrorf(encodeErr, "Problem encoding %v", allThemes)
+	} else {
+		writer.WriteHeader(200)
+	}
 }
 
 // Handles adding schedules to a given scouter
