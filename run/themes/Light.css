@@ -1,0 +1,25 @@
+/* Classic GreenScout Theme */
+
+:root {
+  --background-color: white !important;
+  --accent-color: #9bcbfb !important;
+  --accent-color2: #8fbdeb !important;
+  --accent-color3: #cee5ff !important;
+  --blue-color: #9bcbfb !important;
+  --error-color: var(--disabled-color) !important;
+  --disabled-color: #717172 !important;
+  --font-color: black !important;
+  --font-color-prompt-title: black !important;
+  --font-color-header: black !important;
+  --drop-shadow-color: #626263 !important;
+  --sidenav-hover-color: #444 !important;
+  --faded-text-color: #5f6167 !important;
+  --kelly-green: #4cbb17 !important;
+  --error-message-color: var(--disabled-color) !important;
+  --check-background-color: #4cbb17 !important;
+  --checkbox-default-color: #eee !important;
+  --checkbox-hover-color: #ccc !important;
+  --border-color-faded: #d9d9db !important;
+  --border-color-active: #417096 !important;
+  --sidenav-button-color: #dfdfdf !important;
+}
