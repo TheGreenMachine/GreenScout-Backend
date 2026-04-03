@@ -53,7 +53,7 @@ func InitUserDB() {
 		{columnName: "highscore", valueType: "INT"},
 		{columnName: "accolades", valueType: "TEXT", defaultValue: sql.NullString{String: "'[]'", Valid: true}},
 		{columnName: "color", valueType: "INT"},
-		{columnName: "theme", valueType: "TEXT", defaultValue: sql.NullString{String: "'light'", Valid: true}},
+		{columnName: "theme", valueType: "TEXT", defaultValue: sql.NullString{String: "'Light'", Valid: true}},
 	}
 
 	if dbMissing {
@@ -821,7 +821,7 @@ func SetPfp(uuid string, pfp string) {
 }
 
 // Gets the relative path of a given user's profile picture
-func getTheme(uuid string) string {
+func GetTheme(uuid string) string {
 	var theme string
 	response := userDB.QueryRow("select theme from users where uuid = ?", uuid)
 	scanErr := response.Scan(&theme)
