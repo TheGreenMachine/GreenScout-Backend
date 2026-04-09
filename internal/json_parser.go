@@ -16,7 +16,6 @@ type TeamData struct {
 	Match         MatchInfo         `json:"match"`
 	Scouter       string            `json:"scouter"`
 	DriverStation DriverStationData `json:"driverStation"`
-	Cycles        []Cycle           `json:"cycles"` // The cycle data
 
 	Auto    AutoData    `json:"auto"`
 	Teleop  TeleopData  `json:"teleop"`

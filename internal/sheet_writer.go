@@ -167,10 +167,10 @@ func WriteTeamDataToLine(teamData TeamData, row int) bool { // TODO: FIX FOR NEW
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.Match.Number,            // Match Number
-		teamData.TeamNumber,              // Team Number
-		GetAvgCycleTime(teamData.Cycles), // Avg cycle time
-		GetNumCycles(teamData.Cycles),    // Num Cycles
+		teamData.Match.Number, // Match Number
+		teamData.TeamNumber,   // Team Number
+		// GetAvgCycleTime(teamData.Cycles), // Avg cycle time
+		// GetNumCycles(teamData.Cycles),    // Num Cycles
 		GetCollection(teamData.Teleop.Collection),
 		TurnAutoFieldIntoAnAwesomeAndReadableString(teamData.Auto.Field),
 		teamData.Auto.CanAuto,                                     // Had Auto
@@ -377,18 +377,18 @@ func WritePitDataToLine(pitData PitScoutingData, row int) bool {
 
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
-		pitData.TeamNumber,          //Team Number
-		pitData.Scouter,             //Person/people who pit scouted
-		pitData.Weight,              //The weight of the robot
-		pitData.AutoNum,             //The number of autos they have
-		pitData.Dynamic,             //Whether they have dynamic autos
-		pitData.Drivetrain,          //The type of drivetrain
-		pitData.GearRatio,           //The GearRatio on the top of my head
-		pitData.Coral,               //The position(s) their robot is able to score
-		pitData.Algae,               //The position(s) their robot is able to score
-		pitData.AlgaeGround,         //Whether it can collect algae from the ground
-		pitData.AlgaeSource,         //Whether it can collect algae from the source
-		pitData.Cycle,               //Their cycle time
+		pitData.TeamNumber,  //Team Number
+		pitData.Scouter,     //Person/people who pit scouted
+		pitData.Weight,      //The weight of the robot
+		pitData.AutoNum,     //The number of autos they have
+		pitData.Dynamic,     //Whether they have dynamic autos
+		pitData.Drivetrain,  //The type of drivetrain
+		pitData.GearRatio,   //The GearRatio on the top of my head
+		pitData.Coral,       //The position(s) their robot is able to score
+		pitData.Algae,       //The position(s) their robot is able to score
+		pitData.AlgaeGround, //Whether it can collect algae from the ground
+		pitData.AlgaeSource, //Whether it can collect algae from the source
+		// pitData.Cycle,               //Their cycle time
 		pitData.Experience,          //The driver's experience
 		pitData.Teleop,              //The strategy for teleop??
 		pitData.Endgame,             //The strategy for endgame
@@ -423,9 +423,9 @@ func WritePrescoutDataToLine(teamData TeamData, row int) bool { // TODO: FIX FOR
 	// This is ONE ROW. Each value is a cell in that row.
 	valuesToWrite := []interface{}{
 		GetDSString(teamData.DriverStation.IsBlue, uint(teamData.DriverStation.Number)),
-		teamData.TeamNumber,              // Team Number
-		GetAvgCycleTime(teamData.Cycles), // Avg cycle time
-		GetNumCycles(teamData.Cycles),    // Num Cycles
+		teamData.TeamNumber, // Team Number
+		// GetAvgCycleTime(teamData.Cycles), // Avg cycle time
+		// GetNumCycles(teamData.Cycles), // Num Cycles
 
 		teamData.Auto.CanAuto,          // Had Auto
 		teamData.Auto.Scores,           // Scores in auto
