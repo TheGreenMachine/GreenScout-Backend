@@ -1,5 +1,7 @@
 const std = @import("std");
 
+var direct_paste: bool = false;
+
 fn mapHangingStatus(status: i32) []const u8 {
     return switch (status) {
         0 => "none",
@@ -7,18 +9,6 @@ fn mapHangingStatus(status: i32) []const u8 {
         2 => "hang",
         else => "unknown",
     };
-}
-
-fn convertCycles(allocator: std.mem.Allocator, bad: []BadCycle) ![]Cycle {
-    const out = try allocator.alloc(Cycle, bad.len);
-    for (bad, 0..) |cycle, i| {
-        out[i] = .{
-            .time = cycle.Time,
-            .type = cycle.Type,
-            .accuracy = if (cycle.Success) 1.0 else 0.0,
-        };
-    }
-    return out;
 }
 
 pub fn giveCorrection(json: []const u8) !TeamData {
@@ -38,7 +28,6 @@ pub fn giveCorrection(json: []const u8) !TeamData {
             .isBlue = badTeam.driverStation.IsBlue,
             .number = badTeam.driverStation.Number,
         },
-        .cycles = try convertCycles(std.heap.page_allocator, badTeam.Cycles),
         .auto = .{
             .canAuto = badTeam.Auto.Can,
             .hangAuto = badTeam.Auto.Hang,
@@ -118,6 +107,7 @@ pub fn outputJson(teamData: TeamData, stdout: ?*std.fs.File.Writer, output_path:
     }
 }
 
+// used to find the json in batch when theyre squished up against one another
 pub fn parseInputs(given_file: []const u8, stdout: ?*std.fs.File.Writer, output_path: ?[]const u8) !void {
     var found_next: bool = false;
     var bracket_count: usize = 0;
@@ -139,8 +129,20 @@ pub fn parseInputs(given_file: []const u8, stdout: ?*std.fs.File.Writer, output_
         }
 
         if (found_next and bracket_count == 0) {
-            const correctedData = try giveCorrection(given_file[last_start .. i + 1]);
-            try outputJson(correctedData, stdout, output_path);
+            const json_target = given_file[last_start .. i + 1];
+            var output_data: TeamData = undefined;
+
+            std.debug.print("{s}\n", .{json_target});
+
+            if (!direct_paste) {
+                output_data = try giveCorrection(json_target);
+                try outputJson(output_data, stdout, output_path);
+            } else {
+                const parsed = try std.json.parseFromSlice(TeamData, std.heap.page_allocator, json_target, .{});
+                defer parsed.deinit();
+                try outputJson(parsed.value, stdout, output_path);
+            }
+
             found_next = false;
         }
     }
@@ -167,6 +169,9 @@ pub fn main() !void {
             } else {
                 output_path = ".";
             }
+            continue;
+        } else if (std.mem.startsWith(u8, arg, "--direct")) {
+            direct_paste = true;
             continue;
         }
 
@@ -279,14 +284,13 @@ pub const TeamData = struct {
     match: MatchInfo,
     scouter: []const u8,
     driverStation: DriverStationData,
-    cycles: []Cycle,
     auto: AutoData,
     teleop: TeleopData,
     endgame: EndgameData,
     issues: IssuesData,
     notes: NotesData,
-    rescouting: bool,
-    prescouting: bool,
+    rescouting: bool = false,
+    prescouting: bool = false,
 };
 
 pub const AutoData = struct {
@@ -363,10 +367,4 @@ pub const DriverStationData = struct {
 pub const MatchInfo = struct {
     number: u32,
     isReplay: bool,
-};
-
-pub const Cycle = struct {
-    time: f64,
-    type: []const u8,
-    accuracy: f64,
 };
