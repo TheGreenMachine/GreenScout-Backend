@@ -2,8 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"math"
-
 	"github.com/montanaflynn/stats"
 )
 
@@ -46,7 +44,7 @@ func CompileMultiMatch(entries ...TeamData) MultiMatch { // TODO: FIX FOR NEW
 
 	finalData.DriverStation = entries[0].DriverStation
 
-	finalData.CycleData = compileCycles(entries)
+	// finalData.CycleData = compileCycles(entries)
 
 	// finalData.Pickups = compilePickupPositions(entries)
 
@@ -85,61 +83,62 @@ func compositeScouters(entries []TeamData) string {
 }
 
 // Compiles the cycle data from all matches into one CompositeCycleData
-func compileCycles(entries []TeamData) CompositeCycleData {
-	var finalCycles CompositeCycleData
-	var allNumCycles []int
-	for _, entry := range entries {
-		allNumCycles = append(allNumCycles, GetNumCycles(entry.Cycles))
-	}
-
-	for _, cycleNum := range allNumCycles {
-		if cycleNum != allNumCycles[0] {
-			finalCycles.HadMismatches = true
-		}
-	}
-
-	cycleCompositeTime, hadMismatches := avgCycleTimes(entries)
-
-	finalCycles.AvgCycleTime = cycleCompositeTime
-
-	if hadMismatches {
-		finalCycles.HadMismatches = true
-	}
-
-	var massiveBlockOfCycles []Cycle
-	for _, entry := range entries {
-		massiveBlockOfCycles = append(massiveBlockOfCycles, entry.Cycles...)
-	}
-
-	finalCycles.AllCycles = massiveBlockOfCycles
-
-	return finalCycles
-}
-
+//
+//	func compileCycles(entries []TeamData) CompositeCycleData {
+//		var finalCycles CompositeCycleData
+//		var allNumCycles []int
+//		for _, entry := range entries {
+//			allNumCycles = append(allNumCycles, GetNumCycles(entry.Cycles))
+//		}
+//
+//		for _, cycleNum := range allNumCycles {
+//			if cycleNum != allNumCycles[0] {
+//				finalCycles.HadMismatches = true
+//			}
+//		}
+//
+//		cycleCompositeTime, hadMismatches := avgCycleTimes(entries)
+//
+//		finalCycles.AvgCycleTime = cycleCompositeTime
+//
+//		if hadMismatches {
+//			finalCycles.HadMismatches = true
+//		}
+//
+//		var massiveBlockOfCycles []Cycle
+//		for _, entry := range entries {
+//			massiveBlockOfCycles = append(massiveBlockOfCycles, entry.Cycles...)
+//		}
+//
+//		finalCycles.AllCycles = massiveBlockOfCycles
+//
+//		return finalCycles
+//	}
+//
 // Averages out the cycle times from all entries, returning this average as well as if there were any times that were outside
 // of the configured acceptable range
-func avgCycleTimes(entries []TeamData) (float64, bool) {
-	var sum float64
-	var count int = 0
-
-	var allCycles [][]Cycle
-
-	for _, entry := range entries {
-		allCycles = append(allCycles, entry.Cycles)
-		entryAvg := GetAvgCycleTimeExclusive(entry.Cycles)
-		if entryAvg != 0 {
-			sum += entryAvg
-			count++
-		}
-	}
-
-	finalAvg := sum / float64(count)
-
-	if math.IsNaN(finalAvg) {
-		finalAvg = 0
-	}
-	return finalAvg, !CompareCycles(allCycles)
-}
+// func avgCycleTimes(entries []TeamData) (float64, bool) {
+// 	var sum float64
+// 	var count int = 0
+//
+// 	var allCycles [][]Cycle
+//
+// 	for _, entry := range entries {
+// 		allCycles = append(allCycles, entry.Cycles)
+// 		entryAvg := GetAvgCycleTimeExclusive(entry.Cycles)
+// 		if entryAvg != 0 {
+// 			sum += entryAvg
+// 			count++
+// 		}
+// 	}
+//
+// 	finalAvg := sum / float64(count)
+//
+// 	if math.IsNaN(finalAvg) {
+// 		finalAvg = 0
+// 	}
+// 	return finalAvg, !CompareCycles(allCycles)
+// }
 
 // Combines the pickup locations from all entries
 // func compilePickupPositions(entries []TeamData) PickupLocations {
