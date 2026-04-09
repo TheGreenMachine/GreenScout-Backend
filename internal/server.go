@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -141,6 +142,7 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/getPfp", handleWithCORS(handlePfpRequest, true))
 	http.HandleFunc("/generalInfo", handleWithCORS(handleGeneralInfoRequest, true))
 	http.HandleFunc("/allEvents", handleWithCORS(handleEventsRequest, true))
+	http.HandleFunc("/allThemes", handleWithCORS(handleThemesRequest, false))
 	http.HandleFunc("/gallery", handleWithCORS(handleGalleryRequest, true))
 
 	//Provides Authentication
@@ -151,13 +153,15 @@ func SetupServer() *http.Server {
 	http.HandleFunc("/dataEntry", handleWithCORS(postTeamData, true))
 	http.HandleFunc("/pitScout", handleWithCORS(postPitScout, true))
 	http.HandleFunc("/singleSchedule", handleWithCORS(serveScouterSchedule, true))
-	http.HandleFunc("/theme", handleWithCORS(serveTheme, false))
+	http.HandleFunc("/getTheme", handleWithCORS(serveTheme, false))
 
 	//Admin or curr user
 	http.HandleFunc("/setDisplayName", handleWithCORS(setDisplayName, true))
 	http.HandleFunc("/setUserPfp", handleWithCORS(setPfp, true))
 	http.HandleFunc("/provideAdditions", handleWithCORS(handleFrontendAdditions, true))
 	http.HandleFunc("/setColor", handleWithCORS(handleColorChange, true))
+	http.HandleFunc("/setTheme", handleWithCORS(setTheme, true))
+	http.HandleFunc("/currTheme", handleWithCORS(getTheme, false))
 
 	//Admin or verified
 	http.HandleFunc("/spreadsheet", handleWithCORS(serveSpreadsheet, true))
@@ -459,17 +463,164 @@ func serveScouterSchedule(writer http.ResponseWriter, request *http.Request) {
 	httpResponsef(writer, "Problem serving scouter schedule", "%s", response)
 }
 
+// Serves a theme's css files
 func serveTheme(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromCookies(request)
-	_ = auth
+
+	if auth.Preflight {
+		writer.WriteHeader(200)
+		return
+	}
+
+	if !auth.Authed {
+		writer.WriteHeader(401)
+		httpResponsef(writer, "Could not get user theme", "Not authenticated :(")
+		return
+	}
 
 	writer.Header().Set("Vary", "Cookie")
-	writer.Header().Set("Cache-Control", "private, max-age=0, must-revalidate")
+	writer.Header().Set("Cache-Control", "private, max-age=2, must-revalidate")
 	writer.Header().Set("Content-Type", "text/css; charset=utf-8")
 
-	theme := "light" // getThemeFromCookies(auth.UUID) not implemented
+	// Optionally if you want to grab a theme independent of the user
+	directTheme := request.Header.Get("theme")
 
+	theme := GetTheme(auth.UUID)
+
+	if directTheme != "" {
+		allThemes, err := ListAllThemes()
+		if err != nil {
+			LogError(err, "Failed to fetch all themes: ")
+
+			writer.WriteHeader(500)
+			httpResponsef(writer, "Could not find specified theme", "An unexpected error occurred preventing validation of the theme name")
+			return
+		}
+
+		// this prevents the client from deciding it wants just ANY file on our system (mucho bado)
+		if slices.Contains(allThemes, directTheme) {
+			theme = directTheme
+		} else {
+			writer.WriteHeader(404)
+			httpResponsef(writer, "Could not find specified theme", "Theme %s does not exist.", directTheme)
+			return
+		}
+
+	} else if theme == "" {
+		theme = "Light"
+	}
+
+	writer.WriteHeader(200)
 	http.ServeFile(writer, request, "run/themes/"+theme+".css")
+}
+
+// serves the current theme that the user is using
+func getTheme(writer http.ResponseWriter, request *http.Request) {
+	auth := getAuthFromCookies(request)
+
+	if !auth.Authed {
+		writer.WriteHeader(401)
+		httpResponsef(writer, "Could not set specified theme", "Not authenticated :(")
+		return
+	}
+
+	data := struct {
+		Theme string `json:"theme"`
+	}{
+		Theme: GetTheme(auth.UUID),
+	}
+
+	writer.Header().Add("Content-Type", "application/json")
+	encodeErr := json.NewEncoder(writer).Encode(data)
+	if encodeErr != nil {
+		LogErrorf(encodeErr, "Problem encoding %v", data)
+	} else {
+		writer.WriteHeader(200)
+	}
+
+}
+
+// sets the theme of the authed user
+func setTheme(writer http.ResponseWriter, request *http.Request) {
+	auth := getAuthFromCookies(request)
+
+	if !auth.Authed {
+		writer.WriteHeader(401)
+		httpResponsef(writer, "Could not set specified theme", "Not authenticated :(")
+		return
+	}
+
+	requestBytes, err := io.ReadAll(request.Body)
+	if err != nil {
+		LogErrorf(err, "Problem reading %v", request.Body)
+		writer.WriteHeader(500)
+		return
+	}
+
+	var data map[string]interface{}
+	err = json.Unmarshal(requestBytes, &data)
+	if err != nil {
+		LogErrorf(err, "Problem unmarshalling %v", requestBytes)
+		writer.WriteHeader(400)
+		httpResponsef(writer, "Could not set specified theme", "The json body coukd not be nnmarshalled")
+		return
+	}
+	wantedTheme, ok := data["theme"].(string)
+	if !ok {
+		writer.WriteHeader(400)
+		httpResponsef(writer, "Could not set specified theme", "Missing or invalid 'theme' field")
+		return
+	}
+
+	if wantedTheme != "" {
+		allThemes, err := ListAllThemes()
+		if err != nil {
+			LogError(err, "Failed to fetch all themes: ")
+
+			writer.WriteHeader(500)
+			httpResponsef(writer, "Could not set specified theme", "An unexpected error occurred preventing validation of the theme name")
+			return
+		}
+
+		// Do the checking early when we set the theme
+		if slices.Contains(allThemes, wantedTheme) {
+			SetTheme(auth.UUID, wantedTheme)
+
+			writer.WriteHeader(200)
+			httpResponsef(writer, "Could set specified theme", "Successfully switched to \"%s\".", wantedTheme)
+		} else {
+			writer.WriteHeader(404)
+			httpResponsef(writer, "Could not set specified theme", "Theme \"%s\" does not exist.", wantedTheme)
+			return
+		}
+	}
+
+}
+
+// Serves a list of every theme
+func handleThemesRequest(writer http.ResponseWriter, request *http.Request) {
+	allThemes, err := ListAllThemes()
+	if err != nil {
+		LogError(err, "Failed to fetch all themes: ")
+
+		writer.WriteHeader(500)
+		httpResponsef(writer, "Could not fetch all themes", "An unexpected error occurred preventing the reading of the theme list")
+		return
+	}
+
+	data := struct {
+		Themes []string `json:"themes"`
+	}{
+		Themes: allThemes,
+	}
+
+	writer.Header().Add("Content-Type", "application/json")
+	encodeErr := json.NewEncoder(writer).Encode(data)
+	if encodeErr != nil {
+		LogErrorf(encodeErr, "Problem encoding %v", allThemes)
+	} else {
+		writer.WriteHeader(200)
+	}
 }
 
 // Handles adding schedules to a given scouter
@@ -497,12 +648,15 @@ func addIndividualSchedule(writer http.ResponseWriter, request *http.Request) {
 // Handles requests for the various leaderboards
 func serveLeaderboard(writer http.ResponseWriter, request *http.Request) {
 	var lbType string
-	var typeHeader string = request.Header.Get("type")
-	if typeHeader == "HighScore" {
+
+	wantedType := request.Header.Get("type")
+
+	switch wantedType {
+	case "HighScore":
 		lbType = "highscore"
-	} else if typeHeader == "LifeScore" {
+	case "LifeScore":
 		lbType = "lifescore"
-	} else {
+	default:
 		lbType = "score"
 	}
 
@@ -559,6 +713,7 @@ func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
 		if okCode {
 			w.WriteHeader(200)
 		}
+
 		handler(w, r)
 	}
 }
@@ -831,6 +986,7 @@ type RequestAuth struct {
 	Username    string
 	Role        string
 	Authed      bool
+	Preflight   bool
 }
 
 func (a RequestAuth) IsAdmin() bool {
@@ -840,15 +996,21 @@ func (a RequestAuth) IsAdmin() bool {
 func getAuthFromCookies(request *http.Request) RequestAuth {
 	var auth RequestAuth
 
+	// checks for preflight requests
+	if request.Method == http.MethodOptions {
+		auth.Preflight = true
+		return auth
+	}
+
 	if c, err := request.Cookie("uuid"); err == nil && c != nil {
 		auth.UUID = c.Value
-	} else if err != nil {
+	} else if err != nil && err != http.ErrNoCookie {
 		LogError(err, "error getting request cookie 'uuid'")
 	}
 
 	if c, err := request.Cookie("certificate"); err == nil && c != nil {
 		auth.Certificate = c.Value
-	} else if err != nil {
+	} else if err != nil && err != http.ErrNoCookie {
 		LogError(err, "error getting request cookie 'certificate'")
 	}
 
