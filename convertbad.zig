@@ -1,6 +1,7 @@
 const std = @import("std");
 
 var direct_paste: bool = false;
+var scouter_name: []const u8 = "Zig";
 
 fn mapHangingStatus(status: i32) []const u8 {
     return switch (status) {
@@ -23,7 +24,7 @@ pub fn giveCorrection(json: []const u8) !TeamData {
             .number = @intCast(badTeam.Match.Number),
             .isReplay = badTeam.Match.isReplay,
         },
-        .scouter = badTeam.Notes.Comments,
+        .scouter = scouter_name,
         .driverStation = .{
             .isBlue = badTeam.driverStation.IsBlue,
             .number = badTeam.driverStation.Number,
@@ -138,9 +139,11 @@ pub fn parseInputs(given_file: []const u8, stdout: ?*std.fs.File.Writer, output_
                 output_data = try giveCorrection(json_target);
                 try outputJson(output_data, stdout, output_path);
             } else {
-                const parsed = try std.json.parseFromSlice(TeamData, std.heap.page_allocator, json_target, .{});
+                const parsed = try std.json.parseFromSlice(TeamData, std.heap.page_allocator, json_target, .{ .ignore_unknown_fields = true, .duplicate_field_behavior = .use_first });
                 defer parsed.deinit();
-                try outputJson(parsed.value, stdout, output_path);
+                output_data = parsed.value;
+                output_data.scouter = scouter_name;
+                try outputJson(output_data, stdout, output_path);
             }
 
             found_next = false;
@@ -163,6 +166,8 @@ pub fn main() !void {
     _ = argv.skip();
     while (argv.next()) |arg| {
         const save_flag = "--save";
+        const name_flag = "--name";
+
         if (std.mem.startsWith(u8, arg, save_flag)) {
             if (arg.len > save_flag.len) { // --save=./path/to/save/dir  not file name just directory
                 output_path = arg[save_flag.len + 1 ..];
@@ -172,6 +177,13 @@ pub fn main() !void {
             continue;
         } else if (std.mem.startsWith(u8, arg, "--direct")) {
             direct_paste = true;
+            continue;
+        } else if (std.mem.startsWith(u8, arg, name_flag)) {
+            if (arg.len > save_flag.len) { // --save=./path/to/save/dir  not file name just directory
+                scouter_name = arg[save_flag.len + 1 ..];
+            } else {
+                scouter_name = "Zig";
+            }
             continue;
         }
 
@@ -282,7 +294,7 @@ pub const BadNotes = struct {
 pub const TeamData = struct {
     team: u64,
     match: MatchInfo,
-    scouter: []const u8,
+    scouter: []const u8 = "Zig",
     driverStation: DriverStationData,
     auto: AutoData,
     teleop: TeleopData,
