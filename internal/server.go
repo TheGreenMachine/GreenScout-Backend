@@ -19,11 +19,7 @@ import (
 	"github.com/rs/cors"
 )
 
-var secureCookies = false
-
-func SetSecureCookies(value bool) {
-	secureCookies = value
-}
+var secureCookies = true
 
 // Runs the infinite server loop with a looptime of 5 seconds.
 func RunServerLoop() {
@@ -151,7 +147,6 @@ func SetupServer() *http.Server {
 
 	//Provides Authentication
 	mux.HandleFunc("/login", handleLoginRequest)
-	mux.HandleFunc("/logout", handleLogoutRequest)
 
 	//Any Authentication
 	mux.HandleFunc("/dataEntry", postTeamData)
@@ -197,6 +192,9 @@ func SetupServer() *http.Server {
 		},
 		AllowedHeaders: []string{
 			"Content-Type",
+			"Accept",
+			"X-Requested-With",
+
 			"Authorization",
 			"username",
 			"uuid",
@@ -233,15 +231,15 @@ func handleRoot(writer http.ResponseWriter, request *http.Request) {
 
 // Handles posting of scouting JSON to the server
 func postTeamData(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request) // Don't care about specific role for post, everyone that is auth'd can.
+	auth := getAuthFromRequest(request) // Don't care about specific role for post, everyone that is auth'd can.
 
-	if !auth.Preflight {
+	if auth.Preflight {
 		writer.WriteHeader(200)
 		return
 	}
 
 	if !auth.Authed {
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Problem writing http response to JSON post request with insufficient authentication", "Not authenticated :(")
 		return
 	}
@@ -251,7 +249,6 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 		LogErrorf(readErr, "Problem reading %v", request.Body)
 		writer.WriteHeader(422)
 		return
-
 	}
 
 	var team TeamData
@@ -300,7 +297,7 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 
 // Handles posting of pit scouting JSON to the server
 func postPitScout(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request) //Don't care about specific role for post, everyone that is auth'd can.
+	auth := getAuthFromRequest(request) //Don't care about specific role for post, everyone that is auth'd can.
 
 	if auth.Authed {
 		requestBytes, readErr := io.ReadAll(request.Body)
@@ -355,7 +352,7 @@ func postPitScout(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to change the event key
 func handleKeyChange(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 	if auth.IsAdmin() {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
@@ -397,86 +394,50 @@ func handleScheduleRequest(writer http.ResponseWriter, request *http.Request) {
 func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 	var loginRequest LoginAttempt
 
-	// preflight
 	if request.Method == http.MethodOptions {
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	decodeErr := json.NewDecoder(request.Body).Decode(&loginRequest)
 	if decodeErr != nil && !errors.Is(decodeErr, io.EOF) {
 		LogErrorf(decodeErr, "Problem decoding %v", request.Body)
-		writer.WriteHeader(422)
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		return
 	}
 
 	encryptedBytes, err := base64.StdEncoding.DecodeString(loginRequest.EncryptedPassword)
 	if err != nil {
 		LogErrorf(err, "Problem decoding %v", loginRequest.EncryptedPassword)
-		writer.WriteHeader(422)
+		writer.WriteHeader(http.StatusUnprocessableEntity)
+		return
 	}
 
 	role, authenticated := Authenticate(encryptedBytes)
-
-	if authenticated {
-		uuid, _ := GetUUID(loginRequest.Username, true)
-		cert := GetCertificate(loginRequest.Username, role)
-
-		http.SetCookie(writer, &http.Cookie{
-			Name:     "uuid",
-			Value:    fmt.Sprintf("%v", uuid),
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   secureCookies,
-			SameSite: http.SameSiteNoneMode,
-		})
-		http.SetCookie(writer, &http.Cookie{
-			Name:     "certificate",
-			Value:    fmt.Sprintf("%v", cert),
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   secureCookies,
-			SameSite: http.SameSiteNoneMode,
-		})
-
-		if role == "super" {
-			AddBadge(uuid, Badge{ID: string(Admin)})
-			AddBadge(uuid, Badge{ID: string(Super)})
-		} else if role == "admin" {
-			AddBadge(uuid, Badge{ID: string(Admin)})
-		}
+	if !authenticated {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Login failed", "Not authenticated")
+		return
 	}
 
-	// Role is not an auth credential; leaving as a response header for frontend convenience.
-	writer.Header().Add("Role", role)
+	uuid, _ := GetUUID(loginRequest.Username, true)
 
-	httpResponsef(writer, "Problem writing http response to login request", "User accepted as: %s", role)
-}
+	token, tokErr := mintAccessToken(fmt.Sprintf("%v", uuid), loginRequest.Username, role, 12*time.Hour)
+	if tokErr != nil {
+		LogError(tokErr, "Problem minting access token")
+		writer.WriteHeader(http.StatusInternalServerError)
+		httpResponsef(writer, "Problem minting access token", "Internal error")
+		return
+	}
 
-// Handles logging out by clearing auth cookies
-func handleLogoutRequest(writer http.ResponseWriter, request *http.Request) {
-	// clear uuid cookie
-	http.SetCookie(writer, &http.Cookie{
-		Name:     "uuid",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   secureCookies,
-		SameSite: http.SameSiteNoneMode,
+	writer.Header().Set("Role", role)
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(writer).Encode(map[string]any{
+		"token": token,
+		"role":  role,
+		"uuid":  fmt.Sprintf("%v", uuid),
 	})
-
-	// clear certificate cookie
-	http.SetCookie(writer, &http.Cookie{
-		Name:     "certificate",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   secureCookies,
-		SameSite: http.SameSiteNoneMode,
-	})
-
-	httpResponsef(writer, "Problem writing http response to logout request", "Logged out")
 }
 
 // Serves the public RSA key
@@ -488,7 +449,7 @@ func servePublicKey(writer http.ResponseWriter, request *http.Request) {
 
 // Handles changing the google sheets id
 func handleSheetChange(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 	if auth.IsAdmin() {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
@@ -519,7 +480,7 @@ func serveScouterSchedule(writer http.ResponseWriter, request *http.Request) {
 
 // Serves a theme's css files
 func serveTheme(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if auth.Preflight {
 		writer.WriteHeader(200)
@@ -532,7 +493,6 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	writer.Header().Set("Vary", "Cookie")
 	writer.Header().Set("Cache-Control", "private, max-age=2, must-revalidate")
 	writer.Header().Set("Content-Type", "text/css; charset=utf-8")
 
@@ -570,7 +530,7 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 
 // serves the current theme that the user is using
 func getTheme(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if !auth.Authed {
 		writer.WriteHeader(401)
@@ -596,7 +556,7 @@ func getTheme(writer http.ResponseWriter, request *http.Request) {
 
 // sets the theme of the authed user
 func setTheme(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if !auth.Authed {
 		writer.WriteHeader(401)
@@ -679,7 +639,7 @@ func handleThemesRequest(writer http.ResponseWriter, request *http.Request) {
 
 // Handles adding schedules to a given scouter
 func addIndividualSchedule(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 	if auth.IsAdmin() {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
@@ -723,7 +683,7 @@ func serveLeaderboard(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to alter the leaderboard
 func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if !(auth.Authed && (auth.Role == "admin" || auth.Role == "super")) {
 		writer.WriteHeader(500)
@@ -750,7 +710,7 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 
 // Serves the entire list of users
 func serveUsersRequest(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 	if auth.IsAdmin() {
 		users := GetAllUsers()
 		encodeErr := json.NewEncoder(writer).Encode(GetAllUsers())
@@ -776,7 +736,7 @@ func serveMatchScouter(writer http.ResponseWriter, request *http.Request) {
 func serveUserInfo(writer http.ResponseWriter, request *http.Request) {
 	info := GetUserInfo(request.Header.Get("username"))
 
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 	if auth.UUID != "" && UUIDToUser(auth.UUID) == request.Header.Get("username") {
 		var accoladesNotified []AccoladeData
 		for _, accolade := range info.Accolades {
@@ -795,7 +755,7 @@ func serveUserInfo(writer http.ResponseWriter, request *http.Request) {
 
 // Serves a specific type of user information, used in the admin user information editing on the frontend
 func serveUserInfoForAdmins(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 	if !auth.IsAdmin() {
 		writer.WriteHeader(500)
 		httpResponsef(writer, "Problem writing http response to admin user info request with insufficient authentication", "Not authenticated :(")
@@ -811,7 +771,7 @@ func serveUserInfoForAdmins(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to alter display names
 func setDisplayName(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
@@ -831,7 +791,7 @@ func setDisplayName(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to alter profile pictures
 func setPfp(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
@@ -853,7 +813,7 @@ func setPfp(writer http.ResponseWriter, request *http.Request) {
 
 // Handles additions of accolades from the frontend
 func handleFrontendAdditions(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
@@ -872,7 +832,7 @@ func handleFrontendAdditions(writer http.ResponseWriter, request *http.Request) 
 
 // Handles requests to alter leaderboard colors
 func handleColorChange(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
@@ -896,7 +856,7 @@ func parseColor(colStr string) LBColor {
 
 // Handles requests to add badges
 func addBadge(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if !auth.IsAdmin() {
 		writer.WriteHeader(500)
@@ -920,7 +880,7 @@ func addBadge(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests to add badges
 func setBadges(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if !auth.IsAdmin() {
 		writer.WriteHeader(500)
@@ -944,7 +904,7 @@ func setBadges(writer http.ResponseWriter, request *http.Request) {
 
 // A simple check for if the certificate is valid
 func handleCertificateVerification(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if auth.Authed {
 		writer.WriteHeader(200)
@@ -994,7 +954,7 @@ func handleGalleryRequest(writer http.ResponseWriter, request *http.Request) {
 
 // Serves the spreadsheet link
 func serveSpreadsheet(writer http.ResponseWriter, request *http.Request) {
-	auth := getAuthFromCookies(request)
+	auth := getAuthFromRequest(request)
 
 	if auth.Authed && (auth.Role == "1816" || auth.Role == "admin" || auth.Role == "super") {
 		httpResponsef(writer, "Error serving spreadsheet", "https://docs.google.com/spreadsheets/d/"+CachedConfigs.SpreadSheetID)
@@ -1023,31 +983,27 @@ func (a RequestAuth) IsAdmin() bool {
 	return a.Authed && (a.Role == "admin" || a.Role == "super")
 }
 
-func getAuthFromCookies(request *http.Request) RequestAuth {
+func getAuthFromRequest(request *http.Request) RequestAuth {
 	var auth RequestAuth
 
-	// checks for preflight requests
 	if request.Method == http.MethodOptions {
 		auth.Preflight = true
 		return auth
 	}
 
-	if c, err := request.Cookie("uuid"); err == nil && c != nil {
-		auth.UUID = c.Value
-	} else if err != nil && err != http.ErrNoCookie {
-		LogError(err, "error getting request cookie 'uuid'")
+	tokenString, ok := parseBearerToken(request.Header.Get("Authorization"))
+	if !ok {
+		return auth // not authed
 	}
 
-	if c, err := request.Cookie("certificate"); err == nil && c != nil {
-		auth.Certificate = c.Value
-	} else if err != nil && err != http.ErrNoCookie {
-		LogError(err, "error getting request cookie 'certificate'")
+	claims, err := verifyAccessToken(tokenString)
+	if err != nil {
+		return auth // not authed
 	}
 
-	role, ok := VerifyCertificate(auth.Certificate)
-	auth.Username = UUIDToUser(auth.UUID)
-	auth.Role = role
-	auth.Authed = ok && auth.Username != ""
-
+	auth.UUID = claims.UUID
+	auth.Username = claims.Username
+	auth.Role = claims.Role
+	auth.Authed = auth.Username != "" && auth.UUID != ""
 	return auth
 }
