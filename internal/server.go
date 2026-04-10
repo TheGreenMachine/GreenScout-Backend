@@ -235,6 +235,20 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	if request.Method == http.MethodGet {
+		var team TeamData
+		jsonEncoder := json.NewEncoder(writer)
+		jsonEncoder.SetIndent("", " ")
+		encodeErr := jsonEncoder.Encode(team)
+
+		if encodeErr != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+		}
+
+		writer.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if !auth.Authed {
 		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Problem writing http response to JSON post request with insufficient authentication", "Not authenticated :(")
@@ -603,6 +617,7 @@ func addIndividualSchedule(writer http.ResponseWriter, request *http.Request) {
 
 // Handles requests for the various leaderboards
 func serveLeaderboard(writer http.ResponseWriter, request *http.Request) {
+	start := time.Now()
 	var lbType string
 
 	wantedType := request.Header.Get("type")
@@ -611,6 +626,7 @@ func serveLeaderboard(writer http.ResponseWriter, request *http.Request) {
 	case "HighScore":
 		lbType = "highscore"
 	case "LifeScore":
+
 		lbType = "lifescore"
 	default:
 		lbType = "score"
@@ -621,6 +637,9 @@ func serveLeaderboard(writer http.ResponseWriter, request *http.Request) {
 	if encodeErr != nil {
 		LogErrorf(encodeErr, "Problem encoding %v", leaderboard)
 	}
+
+	elapsed := time.Since(start)
+	fmt.Printf("Execution took: %s", elapsed)
 }
 
 // Handles requests to alter the leaderboard
