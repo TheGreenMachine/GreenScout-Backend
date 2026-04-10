@@ -234,7 +234,7 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request) // Don't care about specific role for post, everyone that is auth'd can.
 
 	if auth.Preflight {
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusNoContent)
 		return
 	}
 
@@ -247,7 +247,7 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 	requestBytes, readErr := io.ReadAll(request.Body)
 	if readErr != nil {
 		LogErrorf(readErr, "Problem reading %v", request.Body)
-		writer.WriteHeader(422)
+		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -266,7 +266,7 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 
 		defer mangledFile.Close()
 
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusBadRequest)
 
 		httpResponsef(writer, "Problem writing http response to Mangled JSON", ":(")
 	} else { // Handle successful unmarshalling
@@ -320,7 +320,7 @@ func postPitScout(writer http.ResponseWriter, request *http.Request) {
 
 			defer mangledFile.Close()
 
-			writer.WriteHeader(500)
+			writer.WriteHeader(http.StatusBadRequest)
 
 			httpResponsef(writer, "Problem writing http response to Mangled JSON", ":(")
 		} else {
@@ -345,7 +345,7 @@ func postPitScout(writer http.ResponseWriter, request *http.Request) {
 			httpResponsef(writer, "Problem writing http response to JSON post request", "Processed %v\n", fileName)
 		}
 	} else {
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Problem writing http response to JSON post request with insufficient authentication", "Not authenticated :(")
 	}
 }
@@ -353,6 +353,11 @@ func postPitScout(writer http.ResponseWriter, request *http.Request) {
 // Handles requests to change the event key
 func handleKeyChange(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if auth.IsAdmin() {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
@@ -365,11 +370,14 @@ func handleKeyChange(writer http.ResponseWriter, request *http.Request) {
 		if SetEventKey(newKey) {
 			httpResponsef(writer, "Problem writing http response to successful event key change", "Successfully changed event key to %v\n", newKey)
 		} else {
+			writer.WriteHeader(http.StatusBadRequest)
 			httpResponsef(writer, "Problem writing http response to unsuccessful event key change", "There was a problem changing the event key to %v, make sure it's valid!\n", newKey)
 		}
 	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Problem writing http response to unauthorized attempt to change event key", "Not successfully authenticated. Please ensure you have correct login details.\n")
 	} else {
+		writer.WriteHeader(http.StatusForbidden)
 		httpResponsef(writer, "Problem writing http response to non-super attempt to change event key", "Not a super user. womp womp\n")
 	}
 }
@@ -450,6 +458,11 @@ func servePublicKey(writer http.ResponseWriter, request *http.Request) {
 // Handles changing the google sheets id
 func handleSheetChange(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if auth.IsAdmin() {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
@@ -461,6 +474,12 @@ func handleSheetChange(writer http.ResponseWriter, request *http.Request) {
 		response := UpdateSheetID(newID)
 
 		httpResponsef(writer, "Problem writing http response to sheet change request", "%s", response)
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response to sheet change request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response to sheet change request with insufficient authorization", "Insufficient permissions :(")
 	}
 }
 
@@ -483,12 +502,12 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
 	if auth.Preflight {
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	if !auth.Authed {
-		writer.WriteHeader(401)
+		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Could not get user theme", "Not authenticated :(")
 		return
 	}
@@ -506,7 +525,7 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			LogError(err, "Failed to fetch all themes: ")
 
-			writer.WriteHeader(500)
+			writer.WriteHeader(http.StatusInternalServerError)
 			httpResponsef(writer, "Could not find specified theme", "An unexpected error occurred preventing validation of the theme name")
 			return
 		}
@@ -515,7 +534,7 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 		if slices.Contains(allThemes, directTheme) {
 			theme = directTheme
 		} else {
-			writer.WriteHeader(404)
+			writer.WriteHeader(http.StatusNotFound)
 			httpResponsef(writer, "Could not find specified theme", "Theme %s does not exist.", directTheme)
 			return
 		}
@@ -524,7 +543,7 @@ func serveTheme(writer http.ResponseWriter, request *http.Request) {
 		theme = "Light"
 	}
 
-	writer.WriteHeader(200)
+	writer.WriteHeader(http.StatusOK)
 	http.ServeFile(writer, request, "run/themes/"+theme+".css")
 }
 
@@ -533,7 +552,7 @@ func getTheme(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
 	if !auth.Authed {
-		writer.WriteHeader(401)
+		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Could not set specified theme", "Not authenticated :(")
 		return
 	}
@@ -549,7 +568,7 @@ func getTheme(writer http.ResponseWriter, request *http.Request) {
 	if encodeErr != nil {
 		LogErrorf(encodeErr, "Problem encoding %v", data)
 	} else {
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusOK)
 	}
 
 }
@@ -559,7 +578,7 @@ func setTheme(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
 	if !auth.Authed {
-		writer.WriteHeader(401)
+		writer.WriteHeader(http.StatusUnauthorized)
 		httpResponsef(writer, "Could not set specified theme", "Not authenticated :(")
 		return
 	}
@@ -567,7 +586,7 @@ func setTheme(writer http.ResponseWriter, request *http.Request) {
 	requestBytes, err := io.ReadAll(request.Body)
 	if err != nil {
 		LogErrorf(err, "Problem reading %v", request.Body)
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -575,13 +594,13 @@ func setTheme(writer http.ResponseWriter, request *http.Request) {
 	err = json.Unmarshal(requestBytes, &data)
 	if err != nil {
 		LogErrorf(err, "Problem unmarshalling %v", requestBytes)
-		writer.WriteHeader(400)
+		writer.WriteHeader(http.StatusBadRequest)
 		httpResponsef(writer, "Could not set specified theme", "The json body coukd not be nnmarshalled")
 		return
 	}
 	wantedTheme, ok := data["theme"].(string)
 	if !ok {
-		writer.WriteHeader(400)
+		writer.WriteHeader(http.StatusBadRequest)
 		httpResponsef(writer, "Could not set specified theme", "Missing or invalid 'theme' field")
 		return
 	}
@@ -591,7 +610,7 @@ func setTheme(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			LogError(err, "Failed to fetch all themes: ")
 
-			writer.WriteHeader(500)
+			writer.WriteHeader(http.StatusInternalServerError)
 			httpResponsef(writer, "Could not set specified theme", "An unexpected error occurred preventing validation of the theme name")
 			return
 		}
@@ -600,10 +619,10 @@ func setTheme(writer http.ResponseWriter, request *http.Request) {
 		if slices.Contains(allThemes, wantedTheme) {
 			SetTheme(auth.UUID, wantedTheme)
 
-			writer.WriteHeader(200)
+			writer.WriteHeader(http.StatusOK)
 			httpResponsef(writer, "Could set specified theme", "Successfully switched to \"%s\".", wantedTheme)
 		} else {
-			writer.WriteHeader(404)
+			writer.WriteHeader(http.StatusNotFound)
 			httpResponsef(writer, "Could not set specified theme", "Theme \"%s\" does not exist.", wantedTheme)
 			return
 		}
@@ -617,7 +636,7 @@ func handleThemesRequest(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		LogError(err, "Failed to fetch all themes: ")
 
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusInternalServerError)
 		httpResponsef(writer, "Could not fetch all themes", "An unexpected error occurred preventing the reading of the theme list")
 		return
 	}
@@ -633,13 +652,18 @@ func handleThemesRequest(writer http.ResponseWriter, request *http.Request) {
 	if encodeErr != nil {
 		LogErrorf(encodeErr, "Problem encoding %v", allThemes)
 	} else {
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusOK)
 	}
 }
 
 // Handles adding schedules to a given scouter
 func addIndividualSchedule(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if auth.IsAdmin() {
 		requestBytes, readErr := io.ReadAll(request.Body)
 		if readErr != nil {
@@ -656,6 +680,12 @@ func addIndividualSchedule(writer http.ResponseWriter, request *http.Request) {
 		AddIndividualSchedule(nameToLookup, true, requestStruct)
 
 		httpResponsef(writer, "Problem writing http response for individual schedule change request", "Successfully added schedule for %s", nameToLookup)
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response for individual schedule change request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response for individual schedule change request with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
@@ -686,7 +716,11 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
 	if !(auth.Authed && (auth.Role == "admin" || auth.Role == "super")) {
-		writer.WriteHeader(500)
+		if !auth.Authed {
+			writer.WriteHeader(http.StatusUnauthorized)
+		} else {
+			writer.WriteHeader(http.StatusForbidden)
+		}
 		httpResponsef(writer, "Problem writing http response for score change request with insufficient authentication", "Not authenticated :(")
 		return
 	}
@@ -711,12 +745,23 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 // Serves the entire list of users
 func serveUsersRequest(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if auth.IsAdmin() {
 		users := GetAllUsers()
 		encodeErr := json.NewEncoder(writer).Encode(GetAllUsers())
 		if encodeErr != nil {
 			LogErrorf(encodeErr, "Problem encoding %v", users)
 		}
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response to users request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response to users request with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
@@ -756,8 +801,17 @@ func serveUserInfo(writer http.ResponseWriter, request *http.Request) {
 // Serves a specific type of user information, used in the admin user information editing on the frontend
 func serveUserInfoForAdmins(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if !auth.IsAdmin() {
-		writer.WriteHeader(500)
+		if !auth.Authed {
+			writer.WriteHeader(http.StatusUnauthorized)
+		} else {
+			writer.WriteHeader(http.StatusForbidden)
+		}
 		httpResponsef(writer, "Problem writing http response to admin user info request with insufficient authentication", "Not authenticated :(")
 		return
 	}
@@ -773,6 +827,11 @@ func serveUserInfoForAdmins(writer http.ResponseWriter, request *http.Request) {
 func setDisplayName(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
 	isAdmin := auth.Authed && (auth.Role == "admin" || auth.Role == "super")
@@ -781,17 +840,28 @@ func setDisplayName(writer http.ResponseWriter, request *http.Request) {
 		SetDisplayName(request.Header.Get("username"), request.Header.Get("displayName"))
 
 		info := GetUserInfo(request.Header.Get("username"))
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusOK)
 		encodeErr := json.NewEncoder(writer).Encode(info)
 		if encodeErr != nil {
 			LogErrorf(encodeErr, "Problem encoding %v", info)
 		}
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response to set display name request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response to set display name request with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
 // Handles requests to alter profile pictures
 func setPfp(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
 
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
@@ -804,16 +874,27 @@ func setPfp(writer http.ResponseWriter, request *http.Request) {
 			LogErrorf(err, "Problem reading %v", request.Body)
 		}
 		if WritePfp(requestBytes, request.Header.Get("Filename")) {
-			writer.WriteHeader(200)
+			writer.WriteHeader(http.StatusOK)
 		} else {
-			writer.WriteHeader(500)
+			writer.WriteHeader(http.StatusInternalServerError)
 		}
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response to set profile picture request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response to set profile picture request with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
 // Handles additions of accolades from the frontend
 func handleFrontendAdditions(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
+
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
 
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
@@ -827,6 +908,12 @@ func handleFrontendAdditions(writer http.ResponseWriter, request *http.Request) 
 		}
 
 		ConsumeFrontendAdditions(Additions, true)
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response to frontend additions request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response to frontend additions request with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
@@ -834,12 +921,23 @@ func handleFrontendAdditions(writer http.ResponseWriter, request *http.Request) 
 func handleColorChange(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	uuid, _ := GetUUID(request.Header.Get("username"), true)
 	isUser := auth.UUID != "" && uuid == auth.UUID
 	isAdmin := auth.IsAdmin()
 
 	if isAdmin || isUser {
 		SetColor(uuid, parseColor(request.Header.Get("color")))
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Problem writing http response to color change request with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Problem writing http response to color change request with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
@@ -858,8 +956,17 @@ func parseColor(colStr string) LBColor {
 func addBadge(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if !auth.IsAdmin() {
-		writer.WriteHeader(500)
+		if !auth.Authed {
+			writer.WriteHeader(http.StatusUnauthorized)
+		} else {
+			writer.WriteHeader(http.StatusForbidden)
+		}
 		httpResponsef(writer, "Problem writing http response for badge addition request with insufficient authentication", "Not authenticated :(")
 		return
 	}
@@ -882,8 +989,17 @@ func addBadge(writer http.ResponseWriter, request *http.Request) {
 func setBadges(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if !auth.IsAdmin() {
-		writer.WriteHeader(500)
+		if !auth.Authed {
+			writer.WriteHeader(http.StatusUnauthorized)
+		} else {
+			writer.WriteHeader(http.StatusForbidden)
+		}
 		httpResponsef(writer, "Problem writing http response for badge config request with insufficient authentication", "Not authenticated :(")
 		return
 	}
@@ -907,9 +1023,9 @@ func handleCertificateVerification(writer http.ResponseWriter, request *http.Req
 	auth := getAuthFromRequest(request)
 
 	if auth.Authed {
-		writer.WriteHeader(200)
+		writer.WriteHeader(http.StatusOK)
 	} else {
-		writer.WriteHeader(500)
+		writer.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
@@ -956,8 +1072,19 @@ func handleGalleryRequest(writer http.ResponseWriter, request *http.Request) {
 func serveSpreadsheet(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromRequest(request)
 
+	if auth.Preflight {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if auth.Authed && (auth.Role == "1816" || auth.Role == "admin" || auth.Role == "super") {
 		httpResponsef(writer, "Error serving spreadsheet", "https://docs.google.com/spreadsheets/d/"+CachedConfigs.SpreadSheetID)
+	} else if !auth.Authed {
+		writer.WriteHeader(http.StatusUnauthorized)
+		httpResponsef(writer, "Error serving spreadsheet with insufficient authentication", "Not authenticated :(")
+	} else {
+		writer.WriteHeader(http.StatusForbidden)
+		httpResponsef(writer, "Error serving spreadsheet with insufficient authorization", "YOURE NOT AN ADMIN GO AWAYYYYY")
 	}
 }
 
