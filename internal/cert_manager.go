@@ -5,6 +5,8 @@ package internal
 import (
 	"strings"
 
+	"database/sql"
+	"errors"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -54,9 +56,11 @@ func VerifyCertificate(certificate string) (string, bool) {
 	scanErr := result.Scan(&certificateRole)
 
 	if scanErr != nil {
-		LogError(scanErr, "error verifying certificate")
+		// we can ignore errors from missing rows since thats cool here
+		if !errors.Is(scanErr, sql.ErrNoRows) {
+			LogError(scanErr, "error verifying certificate")
+		}
 		return "none", false
 	}
-
 	return certificateRole, true
 }

@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/rs/cors"
 )
 
 var secureCookies = false
@@ -131,52 +133,87 @@ func iterativeServerCall() {
 
 // Returns a configured server object
 func SetupServer() *http.Server {
+	mux := http.NewServeMux()
+
 	//No authentication
-	http.HandleFunc("/", handleWithCORS(handleRoot, true))
-	http.HandleFunc("/pub", handleWithCORS(servePublicKey, false))
-	http.HandleFunc("/schedule", handleWithCORS(handleScheduleRequest, true))
-	http.HandleFunc("/leaderboard", handleWithCORS(serveLeaderboard, true))
-	http.HandleFunc("/scouterLookup", handleWithCORS(serveMatchScouter, true))
-	http.HandleFunc("/userInfo", handleWithCORS(serveUserInfo, true))
-	http.HandleFunc("/certificateValid", handleWithCORS(handleCertificateVerification, true))
-	http.HandleFunc("/getPfp", handleWithCORS(handlePfpRequest, true))
-	http.HandleFunc("/generalInfo", handleWithCORS(handleGeneralInfoRequest, true))
-	http.HandleFunc("/allEvents", handleWithCORS(handleEventsRequest, true))
-	http.HandleFunc("/allThemes", handleWithCORS(handleThemesRequest, false))
-	http.HandleFunc("/gallery", handleWithCORS(handleGalleryRequest, true))
+	mux.HandleFunc("/", handleRoot)
+	mux.HandleFunc("/pub", servePublicKey)
+	mux.HandleFunc("/schedule", handleScheduleRequest)
+	mux.HandleFunc("/leaderboard", serveLeaderboard)
+	mux.HandleFunc("/scouterLookup", serveMatchScouter)
+	mux.HandleFunc("/userInfo", serveUserInfo)
+	mux.HandleFunc("/certificateValid", handleCertificateVerification)
+	mux.HandleFunc("/getPfp", handlePfpRequest)
+	mux.HandleFunc("/generalInfo", handleGeneralInfoRequest)
+	mux.HandleFunc("/allEvents", handleEventsRequest)
+	mux.HandleFunc("/allThemes", handleThemesRequest)
+	mux.HandleFunc("/gallery", handleGalleryRequest)
 
 	//Provides Authentication
-	http.HandleFunc("/login", handleWithCORS(handleLoginRequest, false))
-	http.HandleFunc("/logout", handleWithCORS(handleLogoutRequest, false))
+	mux.HandleFunc("/login", handleLoginRequest)
+	mux.HandleFunc("/logout", handleLogoutRequest)
 
 	//Any Authentication
-	http.HandleFunc("/dataEntry", handleWithCORS(postTeamData, true))
-	http.HandleFunc("/pitScout", handleWithCORS(postPitScout, true))
-	http.HandleFunc("/singleSchedule", handleWithCORS(serveScouterSchedule, true))
-	http.HandleFunc("/getTheme", handleWithCORS(serveTheme, false))
+	mux.HandleFunc("/dataEntry", postTeamData)
+	mux.HandleFunc("/pitScout", postPitScout)
+	mux.HandleFunc("/singleSchedule", serveScouterSchedule)
+	mux.HandleFunc("/getTheme", serveTheme)
 
 	//Admin or curr user
-	http.HandleFunc("/setDisplayName", handleWithCORS(setDisplayName, true))
-	http.HandleFunc("/setUserPfp", handleWithCORS(setPfp, true))
-	http.HandleFunc("/provideAdditions", handleWithCORS(handleFrontendAdditions, true))
-	http.HandleFunc("/setColor", handleWithCORS(handleColorChange, true))
-	http.HandleFunc("/setTheme", handleWithCORS(setTheme, true))
-	http.HandleFunc("/currTheme", handleWithCORS(getTheme, false))
+	mux.HandleFunc("/setDisplayName", setDisplayName)
+	mux.HandleFunc("/setUserPfp", setPfp)
+	mux.HandleFunc("/provideAdditions", handleFrontendAdditions)
+	mux.HandleFunc("/setColor", handleColorChange)
+	mux.HandleFunc("/setTheme", setTheme)
+	mux.HandleFunc("/currTheme", getTheme)
 
 	//Admin or verified
-	http.HandleFunc("/spreadsheet", handleWithCORS(serveSpreadsheet, true))
+	mux.HandleFunc("/spreadsheet", serveSpreadsheet)
 
 	//Admin tools
-	http.HandleFunc("/addSchedule", handleWithCORS(addIndividualSchedule, true))
-	http.HandleFunc("/modScore", handleWithCORS(handleScoreChange, true))
-	http.HandleFunc("/allUsers", handleWithCORS(serveUsersRequest, true))
-	http.HandleFunc("/addBadge", handleWithCORS(addBadge, true))
-	http.HandleFunc("/badgeConfig", handleWithCORS(setBadges, false))
-	http.HandleFunc("/keyChange", handleWithCORS(handleKeyChange, false))
-	http.HandleFunc("/sheetChange", handleWithCORS(handleSheetChange, false))
-	http.HandleFunc("/adminUserInfo", handleWithCORS(serveUserInfoForAdmins, true))
+	mux.HandleFunc("/addSchedule", addIndividualSchedule)
+	mux.HandleFunc("/modScore", handleScoreChange)
+	mux.HandleFunc("/allUsers", serveUsersRequest)
+	mux.HandleFunc("/addBadge", addBadge)
+	mux.HandleFunc("/badgeConfig", setBadges)
+	mux.HandleFunc("/keyChange", handleKeyChange)
+	mux.HandleFunc("/sheetChange", handleSheetChange)
+	mux.HandleFunc("/adminUserInfo", serveUserInfoForAdmins)
+
+	corsHandler := cors.New(cors.Options{
+		AllowOriginVaryRequestFunc: func(r *http.Request, origin string) (bool, []string) {
+			if origin == "" {
+				return false, nil
+			}
+			return true, []string{"Origin"}
+		},
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
+		AllowedHeaders: []string{
+			"Content-Type",
+			"Authorization",
+			"username",
+			"uuid",
+			"displayName",
+			"Filename",
+			"userInput",
+			"color",
+			"type",
+			"theme",
+		},
+		ExposedHeaders:       []string{"Role"},
+		AllowCredentials:     true,
+		OptionsSuccessStatus: http.StatusOK,
+	})
 
 	jsrv := &http.Server{ //TODO: love of god add an https thing -Leon
+		Handler: corsHandler.Handler(mux),
 		// Addr: ":8443",
 		// ReadTimeout:  20 * time.Second,
 		// WriteTimeout: 20 * time.Second,
@@ -197,6 +234,12 @@ func handleRoot(writer http.ResponseWriter, request *http.Request) {
 // Handles posting of scouting JSON to the server
 func postTeamData(writer http.ResponseWriter, request *http.Request) {
 	auth := getAuthFromCookies(request) // Don't care about specific role for post, everyone that is auth'd can.
+
+	if !auth.Preflight {
+		writer.WriteHeader(200)
+		return
+	}
+
 	if !auth.Authed {
 		writer.WriteHeader(500)
 		httpResponsef(writer, "Problem writing http response to JSON post request with insufficient authentication", "Not authenticated :(")
@@ -206,6 +249,9 @@ func postTeamData(writer http.ResponseWriter, request *http.Request) {
 	requestBytes, readErr := io.ReadAll(request.Body)
 	if readErr != nil {
 		LogErrorf(readErr, "Problem reading %v", request.Body)
+		writer.WriteHeader(422)
+		return
+
 	}
 
 	var team TeamData
@@ -351,14 +397,22 @@ func handleScheduleRequest(writer http.ResponseWriter, request *http.Request) {
 func handleLoginRequest(writer http.ResponseWriter, request *http.Request) {
 	var loginRequest LoginAttempt
 
+	// preflight
+	if request.Method == http.MethodOptions {
+		writer.WriteHeader(200)
+		return
+	}
+
 	decodeErr := json.NewDecoder(request.Body).Decode(&loginRequest)
 	if decodeErr != nil && !errors.Is(decodeErr, io.EOF) {
 		LogErrorf(decodeErr, "Problem decoding %v", request.Body)
+		writer.WriteHeader(422)
 	}
 
 	encryptedBytes, err := base64.StdEncoding.DecodeString(loginRequest.EncryptedPassword)
 	if err != nil {
 		LogErrorf(err, "Problem decoding %v", loginRequest.EncryptedPassword)
+		writer.WriteHeader(422)
 	}
 
 	role, authenticated := Authenticate(encryptedBytes)
@@ -692,30 +746,6 @@ func handleScoreChange(writer http.ResponseWriter, request *http.Request) {
 	ModifyUserScore(requestStruct.Name, requestStruct.Mod, requestStruct.By)
 
 	httpResponsef(writer, "Problem writing http response for score change request", "Successfully modified score of %s", requestStruct.Name)
-}
-
-// A wrapper for http handler functions to allow them to perform with
-// CORS (Cross-Origin Resource sharing), which is typically highly restricted by modern
-// browsers, especially chromium-based ones.
-// The okCode parameter exists because some requests require a 200 response even before acting. This is honestly just trial and error to determine.
-func handleWithCORS(handler http.HandlerFunc, okCode bool) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		allowOrigin := CachedConfigs.FrontendDomain
-		if r.Header.Get("Origin") != "" {
-			allowOrigin = r.Header.Get("Origin")
-		}
-		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, username, uuid, displayName, Filename, userInput, color, type")
-		w.Header().Set("Access-Control-Expose-Headers", "Role")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if okCode {
-			w.WriteHeader(200)
-		}
-
-		handler(w, r)
-	}
 }
 
 // Serves the entire list of users
