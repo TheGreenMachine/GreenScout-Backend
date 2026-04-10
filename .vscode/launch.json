@@ -15,6 +15,15 @@
             ]
         },
         {
+            "name": "Run Backend (test, local)",
+            "type": "go",
+            "request": "launch",
+            "program": "main.go",
+            "args": [
+                "test", "local"
+            ]
+        },
+        {
             "name": "Run Backend (prod)",
             "type": "go",
             "request": "launch",
