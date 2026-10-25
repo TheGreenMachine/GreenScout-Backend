@@ -1,0 +1,108 @@
+apiVersion: {{ include "greenscout-backend.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "greenscout-backend.fullname" . }}
+  {{- with .Values.deploymentAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "greenscout-backend.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.deploymentStrategy }}
+  strategy:
+    {{- toYaml . | trim | nindent 4 }}
+  {{- end }}
+  replicas: {{ .Values.replicaCount }}
+  {{- with .Values.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "greenscout-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "greenscout-backend.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "greenscout-backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          restartPolicy: {{ .Values.restartPolicy | default "OnFailure" }} # Use OnFailure to prevent automatic deletion of the pod I MADE DAM NEAR 500000 COMMITS AND I NEVER THOUGHT TO CHANGE THE RESTART POLICY.
+          args:
+            - "test"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          
+          volumeMounts:
+          - name: secrets
+            mountPath: "/app/run/credentials.json"
+            subPath: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
+            readOnly: true
+          - name: secrets
+            mountPath: "/app/conf/credentials.json"
+            subPath: {{ .Values.secrets.credentalsKey | default "credentials.json" }}
+            readOnly: true
+          - name: secrets
+            mountPath: "/app/conf/greenscout.config.yaml"
+            subPath: {{ .Values.secrets.configsKey | default "greenscout.config.yaml" }}
+            readOnly: true
+          - name: secrets
+            mountPath: "/app/run/token.json"
+            subPath: {{ .Values.secrets.tokenKey | default "token.json" }}
+            readOnly: true
+          - name: run
+            mountPath: "/app/run/"          
+          
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+  
+      volumes:
+      - name: secrets
+        secret:
+          secretName: {{ .Values.secrets.secretName }}
+      {{- if .Values.volumes.run.enabled }}
+      - name: run
+        persistentVolumeClaim:
+          claimName: {{ .Values.volumes.run.claimName | default "greenscout-backend-run-pvc" }}
+      {{- end }}
