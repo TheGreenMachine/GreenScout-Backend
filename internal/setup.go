@@ -136,9 +136,9 @@ func TotalSetup(publicHosting bool) {
 	// LogMessagef("Python driver validated: %v", configs.PythonDriver)
 
 	// // TBA API key
-	// LogMessage("Ensuring TBA API key...")
-	// configs.TBAKey = ensureTBAKey(configs)
-	// LogMessagef("TBA key validated: %v", configs.TBAKey)
+	LogMessage("Ensuring TBA API key...")
+	configs.TBAKey = ensureTBAKey(configs)
+	LogMessagef("TBA key validated: %v", configs.TBAKey)
 
 	// Event key
 	LogMessage("Ensuring Event key...")

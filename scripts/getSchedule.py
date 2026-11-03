@@ -11,7 +11,7 @@ configuration = tbaapiv3client.Configuration(
     host = "https://www.thebluealliance.com/api/v3"
 )
 
-# Api ket 
+# Api key 
 configuration = tbaapiv3client.Configuration(
     host = "https://www.thebluealliance.com/api/v3",
     api_key = {
